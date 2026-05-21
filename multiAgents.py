@@ -372,5 +372,108 @@ def betterEvaluationFunction(currentGameState: GameState):
     return currentGameState.getScore() + total_score
 
 
+from pacman import GameState
+
+import random
+import util
+from game import Agent
+
+class FeatureExtractor:
+    """
+    [KOLABORATOR DOC]
+    Menambahkan fitur 'ghost-danger' agar agen tidak bunuh diri.
+    """
+    def get_features(self, state, action):
+        features = util.Counter()
+        successor = state.generatePacmanSuccessor(action)
+        new_pos = successor.getPacmanPosition()
+        new_food = successor.getFood()
+        
+        # 1. Fitur Makanan
+        features["eats-food"] = 1.0 if successor.getNumFood() < state.getNumFood() else 0.0
+        
+        food_list = new_food.asList()
+        if len(food_list) > 0:
+            min_food_dist = min([util.manhattanDistance(new_pos, food) for food in food_list])
+            features["closest-food"] = 1.0 / (min_food_dist + 1)
+        else:
+            features["closest-food"] = 0.0
+            
+        # 2. [EDIT] Fitur Bahaya Hantu (Ghost Danger)
+        # Ambil posisi hantu yang aktif (tidak sedang scared)
+        ghosts = successor.getGhostStates()
+        active_ghosts = [g.getPosition() for g in ghosts if g.scaredTimer == 0]
+        
+        if active_ghosts:
+            min_ghost_dist = min([util.manhattanDistance(new_pos, g_pos) for g_pos in active_ghosts])
+            # Jika hantu berjarak 1 blok (bisa memakan Pacman di giliran berikutnya)
+            if min_ghost_dist <= 1:
+                features["ghost-danger"] = 1.0
+            else:
+                features["ghost-danger"] = 0.0
+                
+        return features
+
+
+class ApproximateQAgent(Agent):
+    """
+    [KOLABORATOR DOC]
+    - Menginduk ke `Agent` agar dikenali framework.
+    - Menggunakan `util.Counter()` untuk bobot karena mendukung perkalian dot product (a * b).
+    - Menambahkan `getAction` untuk kebijakan Epsilon-Greedy.
+    """
+    def __init__(self, alpha=0.2, discount=0.8, epsilon=0.05, **kwargs):
+        super().__init__()
+        self.index = 0 
+        self.alpha = float(alpha)
+        self.discount = float(discount)
+        self.epsilon = float(epsilon)
+        
+        # [EDIT] Gunakan util.Counter agar manipulasi matematika lebih efisien
+        self.weights = util.Counter() 
+        # [EDIT] Hubungkan ekstraktor
+        self.extractor = FeatureExtractor() 
+
+    def get_q_value(self, state, action):
+        features = self.extractor.get_features(state, action)
+        # util.Counter mendukung perkalian objek secara langsung untuk dot product
+        return features * self.weights 
+
+    def update(self, state, action, next_state, reward):
+        # [EDIT] Gunakan API CS188 untuk legal actions
+        next_actions = next_state.getLegalActions(self.index)
+        
+        if not next_actions:
+            max_q_next = 0.0
+        else:
+            max_q_next = max([self.get_q_value(next_state, a) for a in next_actions])
+
+        difference = (reward + self.discount * max_q_next) - self.get_q_value(state, action)
+
+        features = self.extractor.get_features(state, action)
+        for feature_name, feature_value in features.items():
+            # Update formula: w_i = w_i + alpha * difference * f_i(s, a)
+            self.weights[feature_name] += self.alpha * difference * feature_value
+
+    def getAction(self, state):
+        """
+        [KOLABORATOR DOC]
+        Kebijakan Epsilon-Greedy. Menentukan apakah agen mengeksplorasi atau mengeksploitasi.
+        """
+        legal_actions = state.getLegalActions(self.index)
+        if not legal_actions:
+            return None
+
+        # Eksplorasi: Ambil tindakan acak dengan probabilitas epsilon
+        if util.flipCoin(self.epsilon):
+            return random.choice(legal_actions)
+
+        # Eksploitasi: Ambil tindakan dengan nilai Q tertinggi
+        q_values = [self.get_q_value(state, action) for action in legal_actions]
+        max_q = max(q_values)
+        
+        # Jika ada beberapa tindakan dengan nilai Q maksimal yang sama, pilih secara acak di antaranya
+        best_actions = [a for a, q in zip(legal_actions, q_values) if q == max_q]
+        return random.choice(best_actions)
 # Abbreviation
 better = betterEvaluationFunction
