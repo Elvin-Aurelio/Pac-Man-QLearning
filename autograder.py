@@ -14,7 +14,7 @@
 
 # imports from python standard library
 import grading
-import imp
+import importlib
 import optparse
 import os
 import pprint
@@ -124,20 +124,36 @@ def setModuleName(module, filename):
 #from cStringIO import StringIO
 
 def loadModuleString(moduleSource):
-    # Below broken, imp doesn't believe its being passed a file:
+    # Below broken, importlib doesn't believe its being passed a file:
     #    ValueError: load_module arg#2 should be a file or None
     #
     #f = StringIO(moduleCodeDict[k])
-    #tmp = imp.load_module(k, f, k, (".py", "r", imp.PY_SOURCE))
-    tmp = imp.new_module(k)
+    #tmp = importlib.import_module(k, f)
+    tmp = importlib.util.new_module(k)
     exec(moduleCodeDict[k], tmp.__dict__)
     setModuleName(tmp, k)
     return tmp
 
 
 def loadModuleFile(moduleName, filePath):
-    with open(filePath, 'r') as f:
-        return imp.load_module(moduleName, f, "%s.py" % moduleName, (".py", "r", imp.PY_SOURCE))
+    # importlib.util may not exist in older Python versions; fall back to imp
+    try:
+        spec = importlib.util.spec_from_file_location(moduleName, filePath)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        try:
+            import imp
+            return imp.load_source(moduleName, filePath)
+        except Exception:
+            # final fallback: execute file in a new module namespace
+            import types
+            module = types.ModuleType(moduleName)
+            with open(filePath, 'r') as f:
+                code = f.read()
+            exec(compile(code, filePath, 'exec'), module.__dict__)
+            return module
 
 
 def readFile(path, root=""):

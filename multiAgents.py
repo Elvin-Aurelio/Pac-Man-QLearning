@@ -20,6 +20,7 @@ from game import Agent
 from pacman import GameState
 
 
+
 class ReflexAgent(Agent):
     """
     A reflex agent chooses an action at each choice point by examining
@@ -96,7 +97,8 @@ class ReflexAgent(Agent):
         # Divide 10 by that distance and then add it to total_score.
         food_distances = {food: util.manhattanDistance(newPos, food) for food in newFood.asList()}
         food, min_food_dist = min(food_distances.items(), key=lambda data: data[1])
-        total_score += 10 / min_food_dist
+        total_score += 10 / (min_food_dist + 1e-10)  # Add a small epsilon to avoid division by zero
+        
         # For every ghost in the next game state calculates the distance from pacman.
         # Ιf there is a ghost whose distance is less than 2 so it is close to the pacman then it checks if it is scared 
         # Αnd acts accordingly by returning -infinity if it is not to "show" that he will die or 200*2^number of dead ghosts.
@@ -143,7 +145,7 @@ class MultiAgentSearchAgent(Agent):
         self.depth = int(depth)
 
 
-class MinimaxAgent(MultiAgentSearchAgent):
+class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_explanation.txt
     """
     Your minimax agent (question 2)
     """
