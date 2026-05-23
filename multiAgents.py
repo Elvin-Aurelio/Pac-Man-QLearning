@@ -296,7 +296,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 # Increase the sum.
                 v += self.expectimax_decision(depth, agentIndex + 1, gameState.generateSuccessor(agentIndex, action))[0]
             # Return the result as the average of the sum.
-            return [v / len(gameState.getLegalActions(agentIndex))]
+            return [v / len(gameState.getLegalActions(agentIndex)), None]
 
     def getAction(self, gameState: GameState):
         """
