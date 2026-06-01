@@ -259,6 +259,11 @@ class PacmanGraphics:
             self.removeFood(newState._foodEaten, self.food)
         if newState._capsuleEaten != None:
             self.removeCapsule(newState._capsuleEaten, self.capsules)
+        # Handle food respawn visuals
+        if hasattr(newState, '_foodAdded') and newState._foodAdded is not None:
+            for cell in newState._foodAdded:
+                self.addFood(cell, self.food)
+            newState._foodAdded = None
         self.infoPane.updateScore(newState.score)
         if 'ghostDistances' in dir(newState):
             self.infoPane.updateGhostDistances(newState.ghostDistances)
@@ -608,6 +613,17 @@ class PacmanGraphics:
     def removeFood(self, cell, foodImages):
         x, y = cell
         remove_from_screen(foodImages[x][y])
+
+    def addFood(self, cell, foodImages):
+        """Redraws a food dot at the given cell position (for food respawn)."""
+        x, y = cell
+        color = FOOD_COLOR
+        screen = self.to_screen((x, y))
+        dot = circle(screen,
+                     FOOD_SIZE * self.gridSize,
+                     outlineColor=color, fillColor=color,
+                     width=1)
+        foodImages[x][y] = dot
 
     def removeCapsule(self, cell, capsuleImages):
         x, y = cell

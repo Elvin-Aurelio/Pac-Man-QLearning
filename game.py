@@ -406,6 +406,9 @@ class GameStateData:
             self.layout = prevState.layout
             self._eaten = prevState._eaten
             self.score = prevState.score
+            # Preserve foodTimers untuk per-biji respawn
+            if hasattr(prevState, 'foodTimers'):
+                self.foodTimers = prevState.foodTimers.copy()
 
         self._foodEaten = None
         self._foodAdded = None
@@ -423,6 +426,9 @@ class GameStateData:
         state._foodEaten = self._foodEaten
         state._foodAdded = self._foodAdded
         state._capsuleEaten = self._capsuleEaten
+        # Preserve foodTimers untuk per-biji respawn
+        if hasattr(self, 'foodTimers'):
+            state.foodTimers = self.foodTimers.copy()
         return state
 
     def copyAgentStates(self, agentStates):
@@ -753,6 +759,11 @@ class Game:
 
             # Allow for game specific conditions (winning, losing, etc.)
             self.rules.process(self.state, self)
+            
+            # Handle food respawn visuals (process() may have set _foodAdded)
+            if hasattr(self.state.data, '_foodAdded') and self.state.data._foodAdded is not None:
+                self.display.update(self.state.data)
+            
             # Track progress
             if agentIndex == numAgents + 1:
                 self.numMoves += 1
