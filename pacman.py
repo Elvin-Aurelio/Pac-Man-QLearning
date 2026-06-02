@@ -261,6 +261,9 @@ class GameState:
         Creates an initial game state from a layout array (see layout.py).
         """
         self.data.initialize(layout, numGhostAgents)
+        # TAMBAH BARIS INI:
+        self.data.initialFood = self.data.food.copy()  # Simpan food grid asli
+        self.data.foodTimers = {}  # Track waktu makan per biji: {(x,y): time_eaten}
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -291,21 +294,36 @@ class ClassicGameRules:
         game.state = initState
         self.initialState = initState.deepCopy()
         self.quiet = quiet
+        initState.data.quietRespawn = quiet
         return game
 
     def process(self, state, game):
         """
-        Checks to see whether it is time to end the game.
+        Checks to see whether it is time to end the game and refresh food timers.
         """
-        if state.isWin():
-            self.win(state, game)
+        # Refresh food yang sudah 10 detik dimakan
+        if hasattr(state.data, 'foodTimers') and state.data.foodTimers:
+            current_time = time.time()
+            expired_positions = []
+            for (x, y), eaten_time in list(state.data.foodTimers.items()):
+                if current_time - eaten_time >= 10:  # 10 detik berlalu
+                    expired_positions.append((x, y))
+            
+            if expired_positions:
+                state.data.food = state.data.food.copy()
+                for (x, y) in expired_positions:
+                    state.data.food[x][y] = True  # Restore biji
+                    del state.data.foodTimers[(x, y)]
+                # Notify display tentang food yang di-respawn
+                state.data._foodAdded = expired_positions
+        
+        # Game hanya berakhir kalau Pacman mati (tidak ada win condition)
         if state.isLose():
             self.lose(state, game)
 
     def win(self, state, game):
-        if not self.quiet:
-            print("Pacman emerges victorious! Score: %d" % state.data.score)
-        game.gameOver = True
+        # Win condition dihapus - game tidak pernah berakhir kecuali Pacman mati
+        pass
 
     def lose(self, state, game):
         if not self.quiet:
@@ -382,11 +400,10 @@ class PacmanRules:
             state.data.food = state.data.food.copy()
             state.data.food[x][y] = False
             state.data._foodEaten = position
-            # TODO: cache numFood?
-            numFood = state.getNumFood()
-            if numFood == 0 and not state.data._lose:
-                state.data.scoreChange += 500
-                state.data._win = True
+            # Track waktu makan untuk respawn per-biji setelah 10 detik
+            if not hasattr(state.data, 'foodTimers'):
+                state.data.foodTimers = {}
+            state.data.foodTimers[(x, y)] = time.time()
         # Eat capsule
         if(position in state.getCapsules()):
             state.data.capsules.remove(position)
