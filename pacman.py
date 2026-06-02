@@ -39,19 +39,29 @@ code to run a game.  This file is divided into three sections:
 To play your first game, type 'python pacman.py' from the command line.
 The keys are 'a', 's', 'd', and 'w' to move (or arrow keys).  Have fun!
 """
-from game import GameStateData
-from game import Game
-from game import Directions
-from game import Actions
-from util import nearestPoint
-from util import manhattanDistance
-import util
-import layout
 import sys
 import types
 import time
 import random
 import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sub_dirs = ['agents', 'core', 'display', 'layouts']
+
+for directory in sub_dirs:
+    dir_path = os.path.join(BASE_DIR, directory)
+    if dir_path not in sys.path:
+        sys.path.insert(0, dir_path)
+        
+from core.game import GameStateData
+from core.game import Game
+from core.game import Directions
+from core.game import Actions
+from core.util import nearestPoint
+from core.util import manhattanDistance
+from core import util
+from core import layout
+
 
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
@@ -609,14 +619,14 @@ def readCommand(argv):
 
     # Choose a display format
     if options.quietGraphics:
-        import textDisplay
+        from display import textDisplay
         args['display'] = textDisplay.NullGraphics()
     elif options.textGraphics:
-        import textDisplay
+        from display import textDisplay
         textDisplay.SLEEP_TIME = options.frameTime
         args['display'] = textDisplay.PacmanGraphics()
     else:
-        import graphicsDisplay
+        from display import graphicsDisplay
         args['display'] = graphicsDisplay.PacmanGraphics(
             options.zoom, frameTime=options.frameTime)
     args['numGames'] = options.numGames
@@ -639,38 +649,55 @@ def readCommand(argv):
 
     return args
 
-
 def loadAgent(pacman, nographics):
-    # Looks through all pythonPath Directories for the right module,
+    """
+    [KOLABORATOR DOC]
+    Fungsi ini telah direstrukturisasi untuk mendukung pencarian agen 
+    di dalam sub-direktori 'agents'.
+    """
+    # 1. Injeksi Path Dinamis: 
+    # Daftarkan folder 'agents' ke dalam sys.path agar perintah __import__ tidak gagal.
+    agents_dir = os.path.join(os.path.dirname(__file__), 'agents')
+    if agents_dir not in sys.path:
+        sys.path.insert(0, agents_dir)
+
+    # 2. Resolusi Python Path Bawaan
     pythonPathStr = os.path.expandvars("$PYTHONPATH")
     if pythonPathStr.find(';') == -1:
         pythonPathDirs = pythonPathStr.split(':')
     else:
         pythonPathDirs = pythonPathStr.split(';')
+    
+    # 3. Penambahan Target Pemindaian
     pythonPathDirs.append('.')
+    pythonPathDirs.append('agents') # Tambahkan folder baru sebagai target listdir
 
     for moduleDir in pythonPathDirs:
         if not os.path.isdir(moduleDir):
             continue
-        moduleNames = [f for f in os.listdir(
-            moduleDir) if f.endswith('gents.py')]
+        
+        # Pindai semua berkas yang berakhiran 'gents.py' di dalam direktori target
+        moduleNames = [f for f in os.listdir(moduleDir) if f.endswith('gents.py')]
+        
         for modulename in moduleNames:
             try:
+                # Mengimpor modul secara dinamis tanpa ekstensi .py
                 module = __import__(modulename[:-3])
-            except ImportError:
+            except ImportError as e:
+                print(f"[Warning] Gagal memuat modul {modulename}: {e}")
                 continue
+            
+            # Refleksi Objek: Periksa apakah class agen (misal 'ApproximateQAgent') ada di modul
             if pacman in dir(module):
                 if nographics and modulename == 'keyboardAgents.py':
-                    raise Exception(
-                        'Using the keyboard requires graphics (not text display)')
+                    raise Exception('Using the keyboard requires graphics (not text display)')
                 return getattr(module, pacman)
-    raise Exception('The agent ' + pacman +
-                    ' is not specified in any *Agents.py.')
-
+                
+    raise Exception('The agent ' + pacman + ' is not specified in any *Agents.py.')
 
 def replayGame(layout, actions, display):
-    import pacmanAgents
-    import ghostAgents
+    from agents import pacmanAgents
+    from agents import ghostAgents
     rules = ClassicGameRules()
     agents = [pacmanAgents.GreedyAgent()] + [ghostAgents.RandomGhost(i+1)
                                              for i in range(layout.getNumGhosts())]
@@ -700,7 +727,7 @@ def runGames(layout, pacman, ghosts, display, numGames, record, numTraining=0, c
         beQuiet = i < numTraining
         if beQuiet:
                 # Suppress output and graphics
-            import textDisplay
+            from display import textDisplay
             gameDisplay = textDisplay.NullGraphics()
             rules.quiet = True
         else:
