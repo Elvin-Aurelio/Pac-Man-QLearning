@@ -53,9 +53,14 @@ for directory in sub_dirs:
     if dir_path not in sys.path:
         sys.path.insert(0, dir_path)
         
-from game import GameStateData, Game, Directions, Actions, nearestPoint
-from util import nearestPoint, manhattanDistance
-from core import util, layout
+from core.game import GameStateData
+from core.game import Game
+from core.game import Directions
+from core.game import Actions
+from core.util import nearestPoint
+from core.util import manhattanDistance
+from core import util
+from core import layout
 
 
 ###################################################
