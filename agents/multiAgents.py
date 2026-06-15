@@ -166,7 +166,9 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
                 # Take the new value.
                 v_new = self.minimax_decision(depth, agentIndex + 1, gameState.generateSuccessor(agentIndex, action))[0]
                 # Change the new value and the action only if the new value is greater.
-                (v, v_action) = (v_new, action) if v_new > v else (v, v_action)
+                if v_new > v or v_action is None:
+                    v = v_new
+                    v_action = action
             # Return the result.
             return [v, v_action]
         # If the agent is a ghost.
@@ -177,7 +179,9 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
                 # Take the new value.
                 v_new = self.minimax_decision(depth, agentIndex + 1, gameState.generateSuccessor(agentIndex, action))[0]
                 # Change the new value and the action only if the new value is smaller.
-                (v, v_action) = (v_new, action) if v_new < v else (v, v_action)
+                if v_new < v or v_action is None:
+                    v = v_new
+                    v_action = action
             # Return the result.
             return [v, v_action]
 
@@ -230,7 +234,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 v_new = self.alpha_beta_search(alpha, beta, depth, agentIndex + 1,
                                                gameState.generateSuccessor(agentIndex, action))[0]
                 # Change the new value and the action only if the new value is greater.
-                (v, v_action) = (v_new, action) if v_new > v else (v, v_action)
+                if v_new > v or v_action is None:
+                    v = v_new
+                    v_action = action
                 # Checks if it needs to stop and return.
                 if v > beta:
                     return [v, v_action]
@@ -246,7 +252,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 v_new = self.alpha_beta_search(alpha, beta, depth, agentIndex + 1,
                                                gameState.generateSuccessor(agentIndex, action))[0]
                 # Change the new value and the action only if the new value is smaller.
-                (v, v_action) = (v_new, action) if v_new < v else (v, v_action)
+                if v_new < v or v_action is None:
+                    v = v_new
+                    v_action = action
                 # Checks if it needs to stop and return.
                 if v < alpha:
                     return [v, v_action]
@@ -285,7 +293,9 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 v_new = \
                     self.expectimax_decision(depth, agentIndex + 1, gameState.generateSuccessor(agentIndex, action))[0]
                 # Change the new value and the action only if the new value is greater.
-                (v, v_action) = (v_new, action) if v_new > v else (v, v_action)
+                if v_new > v or v_action is None:
+                    v = v_new
+                    v_action = action
             # Return the result.
             return [v, v_action]
         # If the agent is a ghost.
@@ -314,7 +324,7 @@ def betterEvaluationFunction(currentGameState: GameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    kita ganti angka 50 dengan 5 (power pellet) dan 10 menjadi 1 (food) pada fungsi heuristic bagian deterominator untuk mencegah stuck karena agen bimbang.
     """
     "*** YOUR CODE HERE ***"
 
@@ -327,7 +337,7 @@ def betterEvaluationFunction(currentGameState: GameState):
     3rd Ghost = 800 Pts
     4th Ghost = 1600 Pts
     I'm also gonna add a -1 pts for every second the pacman does not move. The idea was taken by the current pacman implementation
-    where i spotted this when i was playing the game with the command python3 pacman.py
+    where i spotted this when i was playing the game with the command python3 pacman.py (DIBATALKAN)
     'Stop' = -1 Pts """
 
     newPos = currentGameState.getPacmanPosition()
@@ -347,9 +357,9 @@ def betterEvaluationFunction(currentGameState: GameState):
     # Divide 10 by that distance and then add it to total_score.
     food_distances = {food: util.manhattanDistance(newPos, food) for food in newFood.asList()}
     food, min_food_dist = min(food_distances.items(), key=lambda data: data[1])
-    total_score += 10 / min_food_dist
+    total_score += 1.0 / min_food_dist
     # Decreasing the total score by -1 for every Stop action it finds.
-    total_score -= (-1) * currentGameState.getLegalActions().count('Stop')
+    # total_score -= (-1) * currentGameState.getLegalActions().count('Stop')
     # Get the list with pellet.
     pellet_list = currentGameState.getCapsules()
     # Checks if the pellet list has at least one pellet.
@@ -358,18 +368,24 @@ def betterEvaluationFunction(currentGameState: GameState):
         # Divide 50 by that distance and then add it to total_score.
         pellet_distances = {pellet: util.manhattanDistance(newPos, pellet) for pellet in pellet_list}
         pellet, min_pellet_dist = min(pellet_distances.items(), key=lambda data: data[1])
-        total_score += 50 / min_pellet_dist
+        total_score += 5.0 / min_pellet_dist
     # For every ghost in the next game state calculates the distance from pacman.
     # Ιf there is a ghost whose distance is less than 2 so it is close to the pacman then it checks if it is scared. 
     # Αnd acts accordingly by dividing the total score in half if it is not to "show" that he will die.
     # Or 200*2^number of dead ghosts.
+    # Evaluasi Hantu dengan Gradien Kontinu
     for i in range(len(currentGameState.getGhostPositions())):
-        if util.manhattanDistance(newPos, currentGameState.getGhostPositions()[i]) < 2:
-            if newScaredTimes[i] != 0:
-                total_score += 200 * (2 ** dead_ghosts)
-                dead_ghosts += 1
-            else:
-                total_score /= 2
+        ghost_dist = util.manhattanDistance(newPos, currentGameState.getGhostPositions()[i])
+        
+        # Jika hantu sedang takut (scared)
+        if newScaredTimes[i] > 0:
+            # GRADIEN BERBURU: Tidak ada lagi batasan < 2.
+            # Dari jarak 10 petak pun, Pac-Man sudah merasakan "tarikan magnet" +200 ini.
+            total_score += 200.0 / (ghost_dist + 1)
+        else:
+            # Jika hantu normal dan jaraknya mematikan (< 2)
+            if ghost_dist < 2:
+                return float("-inf") # Insting mutlak: LARI!
     # Return the result.
     return currentGameState.getScore() + total_score
 
