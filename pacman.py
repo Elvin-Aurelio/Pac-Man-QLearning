@@ -268,8 +268,9 @@ class GameState:
         self.data.initialize(layout, numGhostAgents)
         # TAMBAH BARIS INI:
         self.data.initialFood = self.data.food.copy()  # Simpan food grid asli
-        self.data.foodTimers = {}  # Track waktu makan per biji: {(x,y): time_eaten}
-        self.data.capsuleTimers = {}  # Track waktu makan per capsule: {(x,y): time_eaten}
+        self.data.foodTimers = {}  # Track game steps eaten per biji: {(x,y): step_eaten}
+        self.data.capsuleTimers = {}  # Track game steps eaten per capsule
+        self.data.currentStep = 0  # Track current game step
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -307,12 +308,15 @@ class ClassicGameRules:
         """
         Checks to see whether it is time to end the game and refresh food timers.
         """
-        # Refresh food yang sudah 10 detik dimakan
+        # Increment current step counter (deterministic, not wall-clock based)
+        if hasattr(state.data, 'currentStep'):
+            state.data.currentStep += 1
+        
+        # Refresh food yang sudah 100 steps dimakan (deterministic respawn)
         if hasattr(state.data, 'foodTimers') and state.data.foodTimers:
-            current_time = time.time()
             expired_positions = []
-            for (x, y), eaten_time in list(state.data.foodTimers.items()):
-                if current_time - eaten_time >= 10:  # 10 detik berlalu
+            for (x, y), eaten_step in list(state.data.foodTimers.items()):
+                if state.data.currentStep - eaten_step >= 100:  # 100 game steps
                     expired_positions.append((x, y))
             
             if expired_positions:
@@ -323,12 +327,11 @@ class ClassicGameRules:
                 # Notify display tentang food yang di-respawn
                 state.data._foodAdded = expired_positions
         
-        # Refresh capsule yang sudah 10 detik dimakan
+        # Refresh capsule yang sudah 100 steps dimakan (deterministic respawn)
         if hasattr(state.data, 'capsuleTimers') and state.data.capsuleTimers:
-            current_time = time.time()
             expired_capsules = []
-            for (x, y), eaten_time in list(state.data.capsuleTimers.items()):
-                if current_time - eaten_time >= 10:  # 10 detik berlalu
+            for (x, y), eaten_step in list(state.data.capsuleTimers.items()):
+                if state.data.currentStep - eaten_step >= 100:  # 100 game steps
                     expired_capsules.append((x, y))
             
             if expired_capsules:
@@ -422,18 +425,22 @@ class PacmanRules:
             state.data.food = state.data.food.copy()
             state.data.food[x][y] = False
             state.data._foodEaten = position
-            # Track waktu makan untuk respawn per-biji setelah 10 detik
+            # Track game step for respawn per-biji after 100 steps (deterministic)
             if not hasattr(state.data, 'foodTimers'):
                 state.data.foodTimers = {}
-            state.data.foodTimers[(x, y)] = time.time()
+            if not hasattr(state.data, 'currentStep'):
+                state.data.currentStep = 0
+            state.data.foodTimers[(x, y)] = state.data.currentStep
         # Eat capsule
         if(position in state.getCapsules()):
             state.data.capsules.remove(position)
             state.data._capsuleEaten = position
-            # Track waktu makan untuk respawn per-capsule setelah 10 detik
+            # Track game step for respawn per-capsule after 100 steps (deterministic)
             if not hasattr(state.data, 'capsuleTimers'):
                 state.data.capsuleTimers = {}
-            state.data.capsuleTimers[position] = time.time()
+            if not hasattr(state.data, 'currentStep'):
+                state.data.currentStep = 0
+            state.data.capsuleTimers[position] = state.data.currentStep
             # Reset all ghosts' scared timers
             for index in range(1, len(state.data.agentStates)):
                 state.data.agentStates[index].scaredTimer = SCARED_TIME

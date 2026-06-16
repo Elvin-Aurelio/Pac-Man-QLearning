@@ -25,10 +25,16 @@ class GameStateData:
                 self.capsuleTimers = prevState.capsuleTimers.copy()
             else:
                 self.capsuleTimers = {}
+            # Preserve currentStep for deterministic respawn
+            if hasattr(prevState, 'currentStep'):
+                self.currentStep = prevState.currentStep
+            else:
+                self.currentStep = 0
         else:
             # Initialize empty timers for new state
             self.foodTimers = {}
             self.capsuleTimers = {}
+            self.currentStep = 0
 
         self._foodEaten = None
         self._foodAdded = None
@@ -51,6 +57,8 @@ class GameStateData:
         # Ensure timers are copied
         state.foodTimers = self.foodTimers.copy() if hasattr(self, 'foodTimers') else {}
         state.capsuleTimers = self.capsuleTimers.copy() if hasattr(self, 'capsuleTimers') else {}
+        # Ensure currentStep is copied
+        state.currentStep = self.currentStep if hasattr(self, 'currentStep') else 0
         return state
 
     def copyAgentStates(self, agentStates):
