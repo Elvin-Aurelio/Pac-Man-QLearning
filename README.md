@@ -1,558 +1,285 @@
-=================================================
+# Pac-Man AI using Q-Learning & Adversarial Search
 
-PAC-MAN AI USING Q-LEARNING \& ADVERSARIAL SEARCH
+## Project Metadata
 
-=================================================
-
-
-
-Version     : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Language    : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Category    : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Framework   : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+| Property  | Value |
+|-----------|-------|
+| Version   | ISI SENDIRI |
+| Language  | ISI SENDIRI |
+| Category  | ISI SENDIRI |
+| Framework | ISI SENDIRI |
 
 
 
-=================================================
+## Project Overview
 
-PROJECT OVERVIEW
+Project ini mengimplementasikan berbagai algoritma Artificial Intelligence pada permainan Pac-Man untuk mempelajari pengambilan keputusan otomatis dalam lingkungan yang dinamis.
 
-=================================================
+### Available Algorithms
 
+1. **Reflex Agent**
+   - Mengambil keputusan berdasarkan kondisi saat ini
+   - Tidak mempertimbangkan langkah masa depan
 
+2. **Minimax Agent**
+   - Menggunakan pencarian adversarial
+   - Mengasumsikan ghost bermain optimal
 
-Project ini mengimplementasikan berbagai algoritma
+3. **Alpha-Beta Agent**
+   - Optimasi Minimax menggunakan pruning
 
-Artificial Intelligence pada permainan Pac-Man untuk
+4. **Expectimax Agent**
+   - Menganggap ghost bergerak secara probabilistik
 
-mempelajari pengambilan keputusan otomatis dalam
-
-lingkungan yang dinamis.
-
-
-
-Algoritma yang tersedia:
-
-
-
-1\. Reflex Agent
-
-&#x20;  - Mengambil keputusan berdasarkan kondisi saat ini.
-
-&#x20;  - Tidak mempertimbangkan langkah masa depan.
+5. **Q-Learning Agent**
+   - Reinforcement Learning berbasis reward
+   - Belajar dari pengalaman bermain
 
 
 
-2\. Minimax Agent
-
-&#x20;  - Menggunakan pencarian adversarial.
-
-&#x20;  - Mengasumsikan ghost bermain optimal.
-
-
-
-3\. Alpha-Beta Agent
-
-&#x20;  - Optimasi Minimax menggunakan pruning.
-
-
-
-4\. Expectimax Agent
-
-&#x20;  - Menganggap ghost bergerak secara probabilistik.
-
-
-
-5\. Q-Learning Agent
-
-&#x20;  - Reinforcement Learning berbasis reward.
-
-&#x20;  - Belajar dari pengalaman bermain.
-
-
-
-=================================================
-
-GAME OBJECTIVE
-
-=================================================
-
-
+## Game Objective
 
 Tujuan Pac-Man adalah:
 
-
-
-\- Mengumpulkan seluruh food pellet.
-
-\- Menghindari ghost.
-
-\- Memanfaatkan power capsule.
-
-\- Memaksimalkan score.
-
-\- Menyelesaikan level dengan jumlah langkah minimum.
+- Mengumpulkan seluruh food pellet
+- Menghindari ghost
+- Memanfaatkan power capsule
+- Memaksimalkan score
+- Menyelesaikan level dengan jumlah langkah minimum
 
 
 
-=================================================
+## Project Architecture
 
-PROJECT ARCHITECTURE
-
-=================================================
-
-
-
+```
 +-----------------------+
-
 |      pacman.py        |
-
 +-----------+-----------+
-
-&#x20;           |
-
-&#x20;           v
-
+            |
+            v
 +-----------------------+
-
 |       game.py         |
-
 +-----------+-----------+
-
-&#x20;           |
-
-&#x20;           v
-
+            |
+            v
 +-----------------------+
-
 |   Agent Controller    |
-
 +-----------+-----------+
-
-&#x20;           |
-
-&#x20;   +-------+-------+
-
-&#x20;   |               |
-
-&#x20;   v               v
-
+            |
+    +-------+-------+
+    |               |
+    v               v
 Pacman Agent    Ghost Agent
-
-&#x20;   |               |
-
-&#x20;   +-------+-------+
-
-&#x20;           |
-
-&#x20;           v
-
-&#x20;    Game Environment
+    |               |
+    +-------+-------+
+            |
+            v
+    Game Environment
+```
 
 
 
-=================================================
+## Directory Structure
 
-DIRECTORY STRUCTURE
-
-=================================================
-
-
-
-\##Example##
-
-
-
-Pac-Man-QLearning
-
+```
+Pac-Man-QLearning/
 │
-
-├── assets
-
-├── docs
-
-├──src/
-
-&#x09;│
-
-&#x09;├── agents/
-
-&#x09;│   ├── ghostAgents.py
-
-&#x09;│   ├── keyboardAgents.py
-
-&#x09;│   ├── multiAgents.py
-
-&#x09;│   └── pacmanAgents.py
-
-&#x09;│
-
-&#x09;├── core/
-
-&#x09;│   ├── game.py
-
-&#x09;│   ├── layout.py
-
-&#x09;│   └── util.py
-
-&#x09;│
-
-&#x09;├── display/
-
-&#x09;│   ├── graphicsDisplay.py
-
-&#x09;│   ├── graphicsUtils.py
-
-&#x09;│   └── textDisplay.py
-
-&#x09;│
-
-&#x09;└── layouts/
-
+├── assets/
+├── docs/
+├── src/
+│   ├── agents/
+│   │   ├── ghostAgents.py
+│   │   ├── keyboardAgents.py
+│   │   ├── multiAgents.py
+│   │   └── pacmanAgents.py
+│   │
+│   ├── core/
+│   │   ├── game.py
+│   │   ├── layout.py
+│   │   └── util.py
+│   │
+│   ├── display/
+│   │   ├── graphicsDisplay.py
+│   │   ├── graphicsUtils.py
+│   │   └── textDisplay.py
+│   │
+│   └── layouts/
 │
-
-├── tests
-
-│
-
+├── tests/
 ├── README.md
-
 ├── requirements.txt
-
 └── LICENSE
+```
 
 
 
-=================================================
+## Quick Start
 
-QUICK START
-
-=================================================
-
-
-
-Menjalankan game:
-
-
-
+Run the game with default settings:
+```bash
 python pacman.py
+```
 
-
-
-Menjalankan layout tertentu:
-
-
-
+Run with a specific layout:
+```bash
 python pacman.py -l mediumClassic
+```
 
-
-
-Menjalankan tanpa GUI:
-
-
-
+Run without GUI (text mode):
+```bash
 python pacman.py -q
+```
 
-
-
-Menjalankan dengan keyboard:
-
-
-
+Run with keyboard control:
+```bash
 python pacman.py -p KeyboardAgent
+```
 
 
 
-=================================================
+## AI Agent Execution
 
-AI AGENT EXECUTION
-
-=================================================
-
-
-
-Reflex Agent:
-
-
-
-python pacman.py -p ReflexAgent
+| Agent | Command |
+|-------|---------|
+| Reflex Agent | `python pacman.py -p ReflexAgent` |
+| Minimax Agent | `python pacman.py -p MinimaxAgent` |
+| Minimax (depth 3) | `python pacman.py -p MinimaxAgent -a depth=3` |
+| Alpha-Beta Agent | `python pacman.py -p AlphaBetaAgent` |
+| Expectimax Agent | `python pacman.py -p ExpectimaxAgent` |
 
 
 
-Minimax Agent:
+## Performance Evaluation
 
-
-
-python pacman.py -p MinimaxAgent
-
-
-
-Minimax depth 3:
-
-
-
-python pacman.py -p MinimaxAgent -a depth=3
-
-
-
-Alpha-Beta Agent:
-
-
-
-python pacman.py -p AlphaBetaAgent
-
-
-
-Expectimax Agent:
-
-
-
-python pacman.py -p ExpectimaxAgent
-
-
-
-=================================================
-
-PERFORMANCE EVALUATION
-
-=================================================
-
-
-
-Untuk mengevaluasi agent gunakan:
-
-
-
+Run evaluation with multiple games:
+```bash
 python pacman.py -p ReflexAgent -n 10 -q
+```
+
+### Command Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n 10` | Run 10 games |
+| `-q` | Disable GUI (quiet mode) |
+
+### Evaluation Metrics
+
+- Average Score
+- Win Rate
+- Survival Time
+- Number of Steps
+- Food Collected
+- Ghost Encounters
 
 
 
-Keterangan:
+## Debugging
 
-
-
-\-n 10
-
-&#x20;   Menjalankan 10 game.
-
-
-
-\-q
-
-&#x20;   Menonaktifkan GUI.
-
-
-
-Metrik evaluasi:
-
-
-
-\- Average Score
-
-\- Win Rate
-
-\- Survival Time
-
-\- Number of Steps
-
-\- Food Collected
-
-\- Ghost Encounters
-
-
-
-=================================================
-
-DEBUGGING
-
-=================================================
-
-
-
-Menampilkan informasi lebih detail:
-
-
-
+Display help information:
+```bash
 python pacman.py --help
+```
 
-
-
-Menguji layout sederhana:
-
-
-
+Test with simple layout:
+```bash
 python pacman.py -l testClassic
+```
 
-
-
-Menguji layout minimax:
-
-
-
+Test with minimax layout:
+```bash
 python pacman.py -l minimaxClassic
+```
 
 
 
-=================================================
+## Autograder
 
-AUTOGRADER
+Project supports UC Berkeley autograder.
 
-=================================================
-
-
-
-Project mendukung autograder UC Berkeley.
-
-
-
-Menjalankan seluruh test:
-
-
-
+Run all tests:
+```bash
 python autograder.py
+```
 
-
-
-Menjalankan test tertentu:
-
-
-
+Run specific test:
+```bash
 python autograder.py -q q1
+```
 
 
 
-=================================================
+## Reinforcement Learning Concept
 
-REINFORCEMENT LEARNING CONCEPT
+Q-Learning uses the following equation:
 
-=================================================
+Q(s,a) = Q(s,a) + α(r + γ max Q(s',a') - Q(s,a))
 
+Where:
 
+| Variable | Description |
+|----------|-------------|
+| Q(s,a) | Q-value for action a in state s |
+| α | Learning rate |
+| γ | Discount factor |
+| r | Reward |
+| s | Current state |
+| s' | Next state |
 
-Q-Learning menggunakan persamaan:
 
 
+## Future Improvements
 
-:contentReference\[oaicite:0]{index=0}
+Recommended improvements for the project:
 
+**AI**
+- ISI SENDIRI
 
+**Gameplay**
+- ISI SENDIRI
 
-Dimana:
+**Analytics**
+- ISI SENDIRI
 
+**Engineering**
+- ISI SENDIRI
 
+## System Requirements
 
-Q(s,a)  = nilai aksi
+### Minimum Specifications
 
-α       = learning rate
+| Component | Requirement |
+|-----------|-------------|
+| CPU | ISI SENDIRI |
+| RAM | ISI SENDIRI |
+| Python | ISI SENDIRI |
 
-γ       = discount factor
+### Recommended Specifications
 
-r       = reward
+| Component | Requirement |
+|-----------|-------------|
+| CPU | ISI SENDIRI |
+| RAM | ISI SENDIRI |
+| Python | ISI SENDIRI |
 
-s       = state
 
 
+## References
 
-=================================================
+ISI SENDIRI
 
-FUTURE IMPROVEMENTS
 
-=================================================
 
+## License
 
+ISI SENDIRI
 
-Beberapa pengembangan yang direkomendasikan:
 
 
+## Author
 
-\[AI]
-
-\- \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-\[GAMEPLAY]
-
-\- \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-\[ANALYTICS]
-
-\- \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-\[ENGINEERING]
-
-\- \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-=================================================
-
-SYSTEM REQUIREMENTS
-
-=================================================
-
-
-
-Minimum:
-
-
-
-CPU      : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-RAM      : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Python   : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-
-
-Recommended:
-
-
-
-CPU      : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-RAM      : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Python   : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-
-
-=================================================
-
-REFERENCES
-
-=================================================
-
-
-
-\*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-
-
-=================================================
-
-LICENSE
-
-=================================================
-
-
-
-\*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-
-
-=================================================
-
-AUTHOR
-
-=================================================
-
-
-
-Project : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-Purpose : \*\*\*\*\*\*\*\*\*ISI SENDIRI \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
-
-
-
-=================================================
+| Property | Value |
+|----------|-------|
+| Project | ISI SENDIRI |
+| Purpose | ISI SENDIRI |
 
