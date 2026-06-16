@@ -4,10 +4,10 @@
 
 | Property  | Value |
 |-----------|-------|
-| Version   | ISI SENDIRI |
-| Language  | ISI SENDIRI |
-| Category  | ISI SENDIRI |
-| Framework | ISI SENDIRI |
+| Version   | 1.1.5 |
+| Language  | PYTHON |
+| Category  | GAME AI |
+| Framework | TKINTER |
 
 
 
@@ -258,16 +258,27 @@ Complete list of all available command-line flags:
 Recommended improvements for the project:
 
 **AI**
-- ISI SENDIRI
+- Implement Deep Q-Learning with neural networks
+- Add Policy Gradient algorithms (A3C, PPO)
+- Multi-agent coordination and learning
 
 **Gameplay**
-- ISI SENDIRI
+- Multiplayer mode (cooperative/competitive)
+- Custom map editor
+- Dynamic difficulty adjustment
+- Power-up mechanics enhancement
 
 **Analytics**
-- ISI SENDIRI
+- Real-time performance metrics dashboard
+- Training statistics visualization
+- Agent behavior analysis tool
+- Comparison charts for different agents
 
 **Engineering**
-- ISI SENDIRI
+- Comprehensive unit tests (pytest)
+- API documentation (Sphinx)
+- Performance profiling and optimization
+- Code refactoring for modularity
 
 ## System Requirements
 
@@ -275,36 +286,45 @@ Recommended improvements for the project:
 
 | Component | Requirement |
 |-----------|-------------|
-| CPU | ISI SENDIRI |
-| RAM | ISI SENDIRI |
-| Python | ISI SENDIRI |
+| CPU | Dual-core processor (2.0 GHz) |
+| RAM | 2 GB |
+| Python | 3.8+ |
+| Storage | 500 MB |
 
 ### Recommended Specifications
 
 | Component | Requirement |
 |-----------|-------------|
-| CPU | ISI SENDIRI |
-| RAM | ISI SENDIRI |
-| Python | ISI SENDIRI |
+| CPU | Quad-core processor (2.5 GHz+) |
+| RAM | 4-8 GB |
+| Python | 3.10+ |
+| Storage | 1 GB (SSD preferred) |
+| GPU | Optional (for neural network training) |
 
 
 
 ## References
 
-ISI SENDIRI
+- UC Berkeley AI Pacman Project: http://ai.berkeley.edu
+
 
 
 
 ## License
 
-ISI SENDIRI
+Educational License - These projects are free to use or extend for educational purposes. You are free to use or extend these projects provided that (1) you do not distribute or publish solutions, (2) you retain this notice, and (3) you provide clear attribution to UC Berkeley.
+
+For more details, visit: http://ai.berkeley.edu
 
 
 
-## Author
+## Contribution
+1. Elvin Aurelio
+- 
 
-| Property | Value |
-|----------|-------|
-| Project | ISI SENDIRI |
-| Purpose | ISI SENDIRI |
+
+2. Jovanic Manuelo
+* Food Respawn
+* ReadMe & Use Guide setups
+* Change Gameplay to endless mode (no win condition)
 
