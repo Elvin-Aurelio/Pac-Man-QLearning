@@ -13,39 +13,40 @@
 
 ## Project Overview
 
-Project ini mengimplementasikan berbagai algoritma Artificial Intelligence pada permainan Pac-Man untuk mempelajari pengambilan keputusan otomatis dalam lingkungan yang dinamis.
+This project implements various AI algorithms in Pac-Man to explore automated decision-making in dynamic environments.
 
 ### Available Algorithms
 
 1. **Reflex Agent**
-   - Mengambil keputusan berdasarkan kondisi saat ini
-   - Tidak mempertimbangkan langkah masa depan
+   - Making decisions based purely on the current state
+   - Zero consideration for future moves
 
 2. **Minimax Agent**
-   - Menggunakan pencarian adversarial
-   - Mengasumsikan ghost bermain optimal
+   - Using adversarial search
+   - Assuming the ghosts are playing optimally
 
 3. **Alpha-Beta Agent**
-   - Optimasi Minimax menggunakan pruning
+   - Optimizing Minimax using pruning
 
 4. **Expectimax Agent**
-   - Menganggap ghost bergerak secara probabilistik
+   - Assuming the ghosts move probabilistically
 
 5. **Q-Learning Agent**
-   - Reinforcement Learning berbasis reward
-   - Belajar dari pengalaman bermain
+   - Reward-based Reinforcement Learning
+   - Learning straight from gameplay experience
 
 
 
 ## Game Objective
 
-Tujuan Pac-Man adalah:
+Pac-Man's goals are to:
+  - Clear out all the food pellets
 
-- Mengumpulkan seluruh food pellet
-- Menghindari ghost
-- Memanfaatkan power capsule
-- Memaksimalkan score
-- Menyelesaikan level dengan jumlah langkah minimum
+  - Dodge the ghosts
+
+  - Make the most of power capsules
+
+  - Maximize the score
 
 
 
@@ -166,7 +167,6 @@ python pacman.py -p ReflexAgent -n 10 -q
 ### Evaluation Metrics
 
 - Average Score
-- Win Rate
 - Survival Time
 - Number of Steps
 - Food Collected
@@ -190,23 +190,6 @@ Test with minimax layout:
 ```bash
 python pacman.py -l minimaxClassic
 ```
-
-
-
-## Autograder
-
-Project supports UC Berkeley autograder.
-
-Run all tests:
-```bash
-python autograder.py
-```
-
-Run specific test:
-```bash
-python autograder.py -q q1
-```
-
 
 
 ## Reinforcement Learning Concept
