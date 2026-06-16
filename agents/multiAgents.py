@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random, util, time
 
 from game import Agent
 from pacman import GameState
@@ -150,7 +150,15 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
     Your minimax agent (question 2)
     """
 
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        super().__init__(evalFn, depth)
+        self.survival_steps = 0
+        self.nodes_expanded = 0
+        self.total_nodes_expanded = 0
+        self.total_decision_time_ms = 0.0
+
     def minimax_decision(self, depth, agentIndex, gameState: GameState):
+        self.nodes_expanded += 1
         # If all agents has play increase depth and return to pacman.
         if agentIndex == gameState.getNumAgents():
             depth += 1
@@ -208,8 +216,19 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        return self.minimax_decision(0, 0, gameState)[1]
+        self.nodes_expanded = 0
+        start_time = time.time()
+        action = self.minimax_decision(0, 0, gameState)[1]
+        elapsed_ms = (time.time() - start_time) * 1000.0
+        self.total_decision_time_ms += elapsed_ms
+        self.total_nodes_expanded += self.nodes_expanded
+        self.survival_steps += 1
+        return action
+
+    def final(self, state):
+        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
+        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
+        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -217,7 +236,15 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     Your minimax agent with alpha-beta pruning (question 3)
     """
 
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        super().__init__(evalFn, depth)
+        self.survival_steps = 0
+        self.nodes_expanded = 0
+        self.total_nodes_expanded = 0
+        self.total_decision_time_ms = 0.0
+
     def alpha_beta_search(self, alpha, beta, depth, agentIndex, gameState: GameState):
+        self.nodes_expanded += 1
         # If all agents has play increase depth and return to pacman.
         if agentIndex == gameState.getNumAgents():
             depth += 1
@@ -267,8 +294,19 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        return self.alpha_beta_search(float("-inf"), float("inf"), 0, 0, gameState)[1]
+        self.nodes_expanded = 0
+        start_time = time.time()
+        action = self.alpha_beta_search(float("-inf"), float("inf"), 0, 0, gameState)[1]
+        elapsed_ms = (time.time() - start_time) * 1000.0
+        self.total_decision_time_ms += elapsed_ms
+        self.total_nodes_expanded += self.nodes_expanded
+        self.survival_steps += 1
+        return action
+
+    def final(self, state):
+        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
+        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
+        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -276,7 +314,15 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       Your expectimax agent (question 4)
     """
 
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        super().__init__(evalFn, depth)
+        self.survival_steps = 0
+        self.nodes_expanded = 0
+        self.total_nodes_expanded = 0
+        self.total_decision_time_ms = 0.0
+
     def expectimax_decision(self, depth, agentIndex, gameState: GameState):
+        self.nodes_expanded += 1
         # If all agents has play increase depth and return to pacman.
         if agentIndex == gameState.getNumAgents():
             depth += 1
@@ -315,8 +361,19 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        return self.expectimax_decision(0, 0, gameState)[1]
+        self.nodes_expanded = 0
+        start_time = time.time()
+        action = self.expectimax_decision(0, 0, gameState)[1]
+        elapsed_ms = (time.time() - start_time) * 1000.0
+        self.total_decision_time_ms += elapsed_ms
+        self.total_nodes_expanded += self.nodes_expanded
+        self.survival_steps += 1
+        return action
+
+    def final(self, state):
+        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
+        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
+        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
 
 
 def betterEvaluationFunction(currentGameState: GameState):
