@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util, time
+import random, util, time, statistics
 
 from game import Agent
 from pacman import GameState
@@ -156,6 +156,13 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
         self.nodes_expanded = 0
         self.total_nodes_expanded = 0
         self.total_decision_time_ms = 0.0
+        self.episode_survival_steps = []
+        self.episode_total_nodes = []
+        self.episode_avg_nodes = []
+        self.episode_avg_time_ms = []
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
     def minimax_decision(self, depth, agentIndex, gameState: GameState):
         self.nodes_expanded += 1
@@ -216,19 +223,52 @@ class MinimaxAgent(MultiAgentSearchAgent):  # penjelasan sudah ada dalam Agent_e
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
+        if not self.episode_active:
+            self.survival_steps = 0
+            self.current_game_nodes = 0
+            self.current_game_time_ms = 0.0
+            self.episode_active = True
+
         self.nodes_expanded = 0
         start_time = time.time()
         action = self.minimax_decision(0, 0, gameState)[1]
         elapsed_ms = (time.time() - start_time) * 1000.0
-        self.total_decision_time_ms += elapsed_ms
-        self.total_nodes_expanded += self.nodes_expanded
+        self.current_game_nodes += self.nodes_expanded
+        self.current_game_time_ms += elapsed_ms
         self.survival_steps += 1
         return action
 
     def final(self, state):
-        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
-        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
-        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
+        episode_steps = self.survival_steps
+        episode_nodes = self.current_game_nodes
+        episode_avg_nodes = episode_nodes / episode_steps if episode_steps else 0.0
+        episode_avg_time = self.current_game_time_ms / episode_steps if episode_steps else 0.0
+
+        self.episode_survival_steps.append(episode_steps)
+        self.episode_total_nodes.append(episode_nodes)
+        self.episode_avg_nodes.append(episode_avg_nodes)
+        self.episode_avg_time_ms.append(episode_avg_time)
+
+        self.total_nodes_expanded += episode_nodes
+        self.total_decision_time_ms += self.current_game_time_ms
+
+        mean_steps = statistics.mean(self.episode_survival_steps)
+        stdev_steps = statistics.stdev(self.episode_survival_steps) if len(self.episode_survival_steps) > 1 else 0.0
+        mean_nodes = statistics.mean(self.episode_total_nodes)
+        stdev_nodes = statistics.stdev(self.episode_total_nodes) if len(self.episode_total_nodes) > 1 else 0.0
+        mean_avg_nodes = statistics.mean(self.episode_avg_nodes)
+        stdev_avg_nodes = statistics.stdev(self.episode_avg_nodes) if len(self.episode_avg_nodes) > 1 else 0.0
+        mean_avg_time = statistics.mean(self.episode_avg_time_ms)
+        stdev_avg_time = statistics.stdev(self.episode_avg_time_ms) if len(self.episode_avg_time_ms) > 1 else 0.0
+
+        print(f"SUMMARY {self.__class__.__name__} EpisodeSurvivalSteps={episode_steps} EpisodeTotalNodesExpanded={episode_nodes} EpisodeAvgNodesExpandedPerStep={episode_avg_nodes:.2f} EpisodeAvgComputationTimeMs={episode_avg_time:.2f}")
+        print(f"AGGREGATE {self.__class__.__name__} Episodes={len(self.episode_survival_steps)} MeanSurvivalSteps={mean_steps:.2f} StdDevSurvivalSteps={stdev_steps:.2f} MeanTotalNodesExpanded={mean_nodes:.2f} StdDevTotalNodesExpanded={stdev_nodes:.2f} MeanAvgNodesExpandedPerStep={mean_avg_nodes:.2f} StdDevAvgNodesExpandedPerStep={stdev_avg_nodes:.2f} MeanAvgComputationTimeMs={mean_avg_time:.2f} StdDevAvgComputationTimeMs={stdev_avg_time:.2f}")
+
+        # Reset per-game counters for the next episode
+        self.survival_steps = 0
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -242,6 +282,13 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         self.nodes_expanded = 0
         self.total_nodes_expanded = 0
         self.total_decision_time_ms = 0.0
+        self.episode_survival_steps = []
+        self.episode_total_nodes = []
+        self.episode_avg_nodes = []
+        self.episode_avg_time_ms = []
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
     def alpha_beta_search(self, alpha, beta, depth, agentIndex, gameState: GameState):
         self.nodes_expanded += 1
@@ -294,19 +341,49 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
+        if not self.episode_active:
+            self.survival_steps = 0
+            self.current_game_nodes = 0
+            self.current_game_time_ms = 0.0
+            self.episode_active = True
+
         self.nodes_expanded = 0
         start_time = time.time()
         action = self.alpha_beta_search(float("-inf"), float("inf"), 0, 0, gameState)[1]
         elapsed_ms = (time.time() - start_time) * 1000.0
-        self.total_decision_time_ms += elapsed_ms
-        self.total_nodes_expanded += self.nodes_expanded
+        self.current_game_nodes += self.nodes_expanded
+        self.current_game_time_ms += elapsed_ms
         self.survival_steps += 1
         return action
 
     def final(self, state):
-        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
-        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
-        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
+        episode_steps = self.survival_steps
+        episode_nodes = self.current_game_nodes
+        episode_avg_nodes = episode_nodes / episode_steps if episode_steps else 0.0
+        episode_avg_time = self.current_game_time_ms / episode_steps if episode_steps else 0.0
+
+        self.episode_survival_steps.append(episode_steps)
+        self.episode_total_nodes.append(episode_nodes)
+        self.episode_avg_nodes.append(episode_avg_nodes)
+        self.episode_avg_time_ms.append(episode_avg_time)
+
+        mean_steps = statistics.mean(self.episode_survival_steps)
+        stdev_steps = statistics.stdev(self.episode_survival_steps) if len(self.episode_survival_steps) > 1 else 0.0
+        mean_nodes = statistics.mean(self.episode_total_nodes)
+        stdev_nodes = statistics.stdev(self.episode_total_nodes) if len(self.episode_total_nodes) > 1 else 0.0
+        mean_avg_nodes = statistics.mean(self.episode_avg_nodes)
+        stdev_avg_nodes = statistics.stdev(self.episode_avg_nodes) if len(self.episode_avg_nodes) > 1 else 0.0
+        mean_avg_time = statistics.mean(self.episode_avg_time_ms)
+        stdev_avg_time = statistics.stdev(self.episode_avg_time_ms) if len(self.episode_avg_time_ms) > 1 else 0.0
+
+        print(f"SUMMARY {self.__class__.__name__} EpisodeSurvivalSteps={episode_steps} EpisodeTotalNodesExpanded={episode_nodes} EpisodeAvgNodesExpandedPerStep={episode_avg_nodes:.2f} EpisodeAvgComputationTimeMs={episode_avg_time:.2f}")
+        print(f"AGGREGATE {self.__class__.__name__} Episodes={len(self.episode_survival_steps)} MeanSurvivalSteps={mean_steps:.2f} StdDevSurvivalSteps={stdev_steps:.2f} MeanTotalNodesExpanded={mean_nodes:.2f} StdDevTotalNodesExpanded={stdev_nodes:.2f} MeanAvgNodesExpandedPerStep={mean_avg_nodes:.2f} StdDevAvgNodesExpandedPerStep={stdev_avg_nodes:.2f} MeanAvgComputationTimeMs={mean_avg_time:.2f} StdDevAvgComputationTimeMs={stdev_avg_time:.2f}")
+
+        # Reset per-game counters for the next episode
+        self.survival_steps = 0
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -320,6 +397,13 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         self.nodes_expanded = 0
         self.total_nodes_expanded = 0
         self.total_decision_time_ms = 0.0
+        self.episode_survival_steps = []
+        self.episode_total_nodes = []
+        self.episode_avg_nodes = []
+        self.episode_avg_time_ms = []
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
     def expectimax_decision(self, depth, agentIndex, gameState: GameState):
         self.nodes_expanded += 1
@@ -361,19 +445,49 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
+        if not self.episode_active:
+            self.survival_steps = 0
+            self.current_game_nodes = 0
+            self.current_game_time_ms = 0.0
+            self.episode_active = True
+
         self.nodes_expanded = 0
         start_time = time.time()
         action = self.expectimax_decision(0, 0, gameState)[1]
         elapsed_ms = (time.time() - start_time) * 1000.0
-        self.total_decision_time_ms += elapsed_ms
-        self.total_nodes_expanded += self.nodes_expanded
+        self.current_game_nodes += self.nodes_expanded
+        self.current_game_time_ms += elapsed_ms
         self.survival_steps += 1
         return action
 
     def final(self, state):
-        avg_nodes = self.total_nodes_expanded / self.survival_steps if self.survival_steps else 0.0
-        avg_time = self.total_decision_time_ms / self.survival_steps if self.survival_steps else 0.0
-        print(f"SUMMARY {self.__class__.__name__} SurvivalSteps={self.survival_steps} TotalNodesExpanded={self.total_nodes_expanded} AvgNodesExpandedPerStep={avg_nodes:.2f} AvgComputationTimeMs={avg_time:.2f}")
+        episode_steps = self.survival_steps
+        episode_nodes = self.current_game_nodes
+        episode_avg_nodes = episode_nodes / episode_steps if episode_steps else 0.0
+        episode_avg_time = self.current_game_time_ms / episode_steps if episode_steps else 0.0
+
+        self.episode_survival_steps.append(episode_steps)
+        self.episode_total_nodes.append(episode_nodes)
+        self.episode_avg_nodes.append(episode_avg_nodes)
+        self.episode_avg_time_ms.append(episode_avg_time)
+
+        mean_steps = statistics.mean(self.episode_survival_steps)
+        stdev_steps = statistics.stdev(self.episode_survival_steps) if len(self.episode_survival_steps) > 1 else 0.0
+        mean_nodes = statistics.mean(self.episode_total_nodes)
+        stdev_nodes = statistics.stdev(self.episode_total_nodes) if len(self.episode_total_nodes) > 1 else 0.0
+        mean_avg_nodes = statistics.mean(self.episode_avg_nodes)
+        stdev_avg_nodes = statistics.stdev(self.episode_avg_nodes) if len(self.episode_avg_nodes) > 1 else 0.0
+        mean_avg_time = statistics.mean(self.episode_avg_time_ms)
+        stdev_avg_time = statistics.stdev(self.episode_avg_time_ms) if len(self.episode_avg_time_ms) > 1 else 0.0
+
+        print(f"SUMMARY {self.__class__.__name__} EpisodeSurvivalSteps={episode_steps} EpisodeTotalNodesExpanded={episode_nodes} EpisodeAvgNodesExpandedPerStep={episode_avg_nodes:.2f} EpisodeAvgComputationTimeMs={episode_avg_time:.2f}")
+        print(f"AGGREGATE {self.__class__.__name__} Episodes={len(self.episode_survival_steps)} MeanSurvivalSteps={mean_steps:.2f} StdDevSurvivalSteps={stdev_steps:.2f} MeanTotalNodesExpanded={mean_nodes:.2f} StdDevTotalNodesExpanded={stdev_nodes:.2f} MeanAvgNodesExpandedPerStep={mean_avg_nodes:.2f} StdDevAvgNodesExpandedPerStep={stdev_avg_nodes:.2f} MeanAvgComputationTimeMs={mean_avg_time:.2f} StdDevAvgComputationTimeMs={stdev_avg_time:.2f}")
+
+        # Reset per-game counters for the next episode
+        self.survival_steps = 0
+        self.current_game_nodes = 0
+        self.current_game_time_ms = 0.0
+        self.episode_active = False
 
 
 def betterEvaluationFunction(currentGameState: GameState):
@@ -411,10 +525,12 @@ def betterEvaluationFunction(currentGameState: GameState):
     if currentGameState.isLose():
         return float("-inf")
     # Calculates the manhattanDistance from next pacman's position to all foods and take the minimum one.
-    # Divide 10 by that distance and then add it to total_score.
-    food_distances = {food: util.manhattanDistance(newPos, food) for food in newFood.asList()}
-    food, min_food_dist = min(food_distances.items(), key=lambda data: data[1])
-    total_score += 1.0 / min_food_dist
+    # If there is no food left, skip the food-based contribution.
+    food_list = newFood.asList()
+    if food_list:
+        food_distances = {food: util.manhattanDistance(newPos, food) for food in food_list}
+        _, min_food_dist = min(food_distances.items(), key=lambda data: data[1])
+        total_score += 1.0 / (min_food_dist + 1e-10)
     # Decreasing the total score by -1 for every Stop action it finds.
     # total_score -= (-1) * currentGameState.getLegalActions().count('Stop')
     # Get the list with pellet.
