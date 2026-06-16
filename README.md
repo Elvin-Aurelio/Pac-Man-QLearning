@@ -228,6 +228,31 @@ Where:
 
 
 
+## Dictionary Commands
+
+Complete list of all available command-line flags:
+
+| Flag | Full Name | Description | Default |
+|------|-----------|-------------|---------|
+| `-n` | `--numGames` | Number of games to play | 1 |
+| `-l` | `--layout` | Layout file to load | mediumClassic |
+| `-p` | `--pacman` | Pacman agent type | KeyboardAgent |
+| `-t` | `--textGraphics` | Display output as text only | False |
+| `-q` | `--quietTextGraphics` | Minimal output, no graphics | False |
+| `-g` | `--ghosts` | Ghost agent type | RandomGhost |
+| `-k` | `--numghosts` | Maximum number of ghosts | 4 |
+| `-z` | `--zoom` | Zoom size of graphics window | 1.0 |
+| `-f` | `--fixRandomSeed` | Fix random seed for same game | False |
+| `-r` | `--recordActions` | Record game history to file | False |
+| `--replay` | `--replay` | Replay a recorded game file | None |
+| `-a` | `--agentArgs` | Agent parameters (comma-separated) | - |
+| `-x` | `--numTraining` | Number of training episodes | 0 |
+| `--frameTime` | `--frameTime` | Delay between frames (seconds) | 0.1 |
+| `-c` | `--catchExceptions` | Enable exception handling | False |
+| `--timeout` | `--timeout` | Max computation time per game (seconds) | 30 |
+
+
+
 ## Future Improvements
 
 Recommended improvements for the project:
