@@ -269,6 +269,7 @@ class GameState:
         # TAMBAH BARIS INI:
         self.data.initialFood = self.data.food.copy()  # Simpan food grid asli
         self.data.foodTimers = {}  # Track waktu makan per biji: {(x,y): time_eaten}
+        self.data.capsuleTimers = {}  # Track waktu makan per capsule: {(x,y): time_eaten}
 
 ############################################################################
 #                     THE HIDDEN SECRETS OF PACMAN                         #
@@ -321,6 +322,22 @@ class ClassicGameRules:
                     del state.data.foodTimers[(x, y)]
                 # Notify display tentang food yang di-respawn
                 state.data._foodAdded = expired_positions
+        
+        # Refresh capsule yang sudah 10 detik dimakan
+        if hasattr(state.data, 'capsuleTimers') and state.data.capsuleTimers:
+            current_time = time.time()
+            expired_capsules = []
+            for (x, y), eaten_time in list(state.data.capsuleTimers.items()):
+                if current_time - eaten_time >= 10:  # 10 detik berlalu
+                    expired_capsules.append((x, y))
+            
+            if expired_capsules:
+                for (x, y) in expired_capsules:
+                    if (x, y) not in state.data.capsules:
+                        state.data.capsules.append((x, y))  # Restore capsule
+                    del state.data.capsuleTimers[(x, y)]
+                # Notify display tentang capsule yang di-respawn
+                state.data._capsuleAdded = expired_capsules
         
         # Game hanya berakhir kalau Pacman mati (tidak ada win condition)
         if state.isLose():
@@ -413,6 +430,10 @@ class PacmanRules:
         if(position in state.getCapsules()):
             state.data.capsules.remove(position)
             state.data._capsuleEaten = position
+            # Track waktu makan untuk respawn per-capsule setelah 10 detik
+            if not hasattr(state.data, 'capsuleTimers'):
+                state.data.capsuleTimers = {}
+            state.data.capsuleTimers[position] = time.time()
             # Reset all ghosts' scared timers
             for index in range(1, len(state.data.agentStates)):
                 state.data.agentStates[index].scaredTimer = SCARED_TIME
@@ -707,6 +728,8 @@ def replayGame(layout, actions, display):
         display.update(state.data)
         # Allow for game specific conditions (winning, losing, etc.)
         rules.process(state, game)
+        # Update display again for respawn visuals
+        display.update(state.data)
 
     display.finish()
 

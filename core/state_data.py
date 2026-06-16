@@ -18,10 +18,22 @@ class GameStateData:
             # Preserve foodTimers untuk per-biji respawn
             if hasattr(prevState, 'foodTimers'):
                 self.foodTimers = prevState.foodTimers.copy()
+            else:
+                self.foodTimers = {}
+            # Preserve capsuleTimers untuk per-capsule respawn
+            if hasattr(prevState, 'capsuleTimers'):
+                self.capsuleTimers = prevState.capsuleTimers.copy()
+            else:
+                self.capsuleTimers = {}
+        else:
+            # Initialize empty timers for new state
+            self.foodTimers = {}
+            self.capsuleTimers = {}
 
         self._foodEaten = None
         self._foodAdded = None
         self._capsuleEaten = None
+        self._capsuleAdded = None
         self._agentMoved = None
         self._lose = False
         self._win = False
@@ -35,9 +47,10 @@ class GameStateData:
         state._foodEaten = self._foodEaten
         state._foodAdded = self._foodAdded
         state._capsuleEaten = self._capsuleEaten
-        # Preserve foodTimers untuk per-biji respawn
-        if hasattr(self, 'foodTimers'):
-            state.foodTimers = self.foodTimers.copy()
+        state._capsuleAdded = self._capsuleAdded
+        # Ensure timers are copied
+        state.foodTimers = self.foodTimers.copy() if hasattr(self, 'foodTimers') else {}
+        state.capsuleTimers = self.capsuleTimers.copy() if hasattr(self, 'capsuleTimers') else {}
         return state
 
     def copyAgentStates(self, agentStates):

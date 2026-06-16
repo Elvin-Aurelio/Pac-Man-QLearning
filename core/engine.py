@@ -225,6 +225,10 @@ class Game:
             if hasattr(self.state.data, '_foodAdded') and self.state.data._foodAdded is not None:
                 self.display.update(self.state.data)
             
+            # Handle capsule respawn visuals (process() may have set _capsuleAdded)
+            if hasattr(self.state.data, '_capsuleAdded') and self.state.data._capsuleAdded is not None:
+                self.display.update(self.state.data)
+            
             # Track progress
             if agentIndex == numAgents + 1:
                 self.numMoves += 1

@@ -264,6 +264,14 @@ class PacmanGraphics:
             for cell in newState._foodAdded:
                 self.addFood(cell, self.food)
             newState._foodAdded = None
+        # Handle capsule respawn visuals
+        if hasattr(newState, '_capsuleAdded') and newState._capsuleAdded is not None:
+            for cell in newState._capsuleAdded:
+                try:
+                    self.addCapsule(cell, self.capsules)
+                except Exception as e:
+                    print(f"Error adding capsule at {cell}: {e}")
+            newState._capsuleAdded = None
         self.infoPane.updateScore(newState.score)
         if 'ghostDistances' in dir(newState):
             self.infoPane.updateGhostDistances(newState.ghostDistances)
@@ -628,6 +636,17 @@ class PacmanGraphics:
     def removeCapsule(self, cell, capsuleImages):
         x, y = cell
         remove_from_screen(capsuleImages[(x, y)])
+
+    def addCapsule(self, cell, capsuleImages):
+        """Redraws a capsule at the given cell position (for capsule respawn)."""
+        x, y = cell
+        (screen_x, screen_y) = self.to_screen((x, y))
+        dot = circle((screen_x, screen_y),
+                     CAPSULE_SIZE * self.gridSize,
+                     outlineColor=CAPSULE_COLOR,
+                     fillColor=CAPSULE_COLOR,
+                     width=1)
+        capsuleImages[(x, y)] = dot
 
     def drawExpandedCells(self, cells):
         """
