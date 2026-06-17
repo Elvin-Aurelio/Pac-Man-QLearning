@@ -12,6 +12,12 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+import json
+import os
+
+import os
+import json
+
 from util import manhattanDistance
 from game import Directions
 import random, util, time, statistics
@@ -563,12 +569,6 @@ def betterEvaluationFunction(currentGameState: GameState):
     return currentGameState.getScore() + total_score
 
 
-from pacman import GameState
-
-import random
-import util
-from game import Agent
-
 class FeatureExtractor:
     """
     
@@ -617,6 +617,50 @@ class FeatureExtractor:
     pada RL model-free murni, agen tidak boleh memiliki fungsi prediksi state. 
     Namun untuk stabilitas kalkulasi jarak di framework ini, simulasi 1-langkah diizinkan.
     """
+    def bfs_closest_distance(self, start_pos, target_positions, walls):
+        """
+        [KOLABORATOR DOC]
+        Fungsi pencarian jarak terpendek menggunakan algoritma pencarian melebar (BFS).
+        Alih-alih mencari rute ke setiap target (yang berbiaya besar), 
+        kita menyebar dari posisi awal dan berhenti pada target pertama yang ditemukan.
+        
+        Asumsi: Titik koordinat harus berupa integer agar sepadan dengan indeks matriks dinding.
+        """
+        if not target_positions:
+            return None
+        
+        # Konversi struktur data ke Set untuk lookup O(1)
+        target_set = set(target_positions)
+        
+        if start_pos in target_set:
+            return 0.0
+
+        # Antrean untuk menampung (koordinat_x, koordinat_y, jarak_kumulatif)
+        queue = util.Queue()
+        queue.push((start_pos, 0.0))
+        visited = set()
+        visited.add(start_pos)
+
+        while not queue.isEmpty():
+            current_pos, dist = queue.pop()
+            x, y = current_pos
+
+            # Ekspansi ke 4 arah mata angin (Utara, Selatan, Timur, Barat)
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                next_x, next_y = int(x + dx), int(y + dy)
+                next_pos = (next_x, next_y)
+
+                # Syarat ekspansi: bukan tembok dan belum pernah dikunjungi
+                if not walls[next_x][next_y] and next_pos not in visited:
+                    if next_pos in target_set:
+                        return dist + 1.0 # Target terdekat ditemukan!
+                    
+                    visited.add(next_pos)
+                    queue.push((next_pos, dist + 1.0))
+        
+        # Skenario ekstrim: target sepenuhnya tertutup tembok (unreachable)
+        return None
+    
     def get_features(self, state, action):
         features = util.Counter()
         # Menggunakan index 0 untuk Pac-Man
@@ -639,12 +683,15 @@ class FeatureExtractor:
         scared_ghosts = []
 
         for ghost in ghost_states:
-            ghost_pos = ghost.getPosition()
-            # f5_threshold: Waktu transisi kritis ditetapkan pada 2 frame
+            # Normalisasi koordinat: Posisi hantu bisa berupa float jika sedang melayang
+            # di antara blok. Kita wajib membulatkannya ke integer terdekat.
+            gx, gy = ghost.getPosition()
+            ghost_grid_pos = (int(gx + 0.5), int(gy + 0.5))
+
             if ghost.scaredTimer < 2:
-                active_ghosts.append(ghost_pos)
+                active_ghosts.append(ghost_grid_pos)
             else:
-                scared_ghosts.append(ghost_pos)
+                scared_ghosts.append(ghost_grid_pos)
 
         # 2. Fitur f2: Jarak ke hantu aktif / berbahaya
         if active_ghosts:
@@ -706,6 +753,43 @@ class ApproximateQAgent(Agent):
         self.lastState = None
         self.lastAction = None
 
+        # [MODIFIKASI] Memuat memori saat agen dilahirkan
+        self.model_path = "pacman_weights.json"
+        self.load_weights()
+
+    def load_weights(self):
+        """
+        [KOLABORATOR DOC]
+        Membaca matriks bobot dari sistem berkas.
+        Fungsi ini memungkinkan transfer learning: jika agen pernah dilatih, 
+        ia akan memuat pengalamannya. Jika belum, ia mulai dari nol.
+        """
+        if os.path.exists(self.model_path):
+            with open(self.model_path, "r") as file:
+                loaded_dict = json.load(file)
+                # Rekonstruksi dictionary standar kembali ke util.Counter
+                for key, value in loaded_dict.items():
+                    self.weights[key] = float(value)
+            print(f"Model berhasil dimuat dari {self.model_path}.")
+            
+            # Asumsi logis: Jika model sudah ada, agen diasumsikan sudah cukup pintar.
+            # Kita secara otomatis menekan epsilon agar agen lebih fokus eksploitasi
+            # daripada melakukan eksplorasi acak seperti agen baru.
+            self.epsilon = max(0.01, self.epsilon * 0.5) 
+        else:
+            print("model_weights.json tidak ditemukan. Agen memulai dengan bobot nol dan epsilon default.")
+    def save_weights(self):
+        """
+        [KOLABORATOR DOC]
+        Serialisasi matriks bobot ke format JSON.
+        Disimpan dalam bentuk hirarki agar mudah diaudit secara visual
+        oleh peneliti data sains.
+        """
+        weights_dict = dict(self.weights)
+        with open(self.model_path, "w") as file:
+            json.dump(weights_dict, file, indent=4)
+
+
     def registerInitialState(self, state):
         """
         [KOLABORATOR DOC]
@@ -715,7 +799,6 @@ class ApproximateQAgent(Agent):
         pemutusan paksa framework.
         """
         if self.lastState is not None:
-            # Bukti forensik: Game sebelumnya lenyap tanpa memanggil 'final'.
             # Karena ini mode endless (kematian adalah satu-satunya jalan keluar),
             # kita asumsikan mutlak bahwa transisi terakhir adalah kematian.
             terminal_reward = -500.0
@@ -740,7 +823,8 @@ class ApproximateQAgent(Agent):
         # Agen harus beralih dari fase 'coba-coba' menjadi 'eksploitasi ilmu'.
         if self.epsilon > 0.05:
             self.epsilon *= 0.95
-        
+
+        self.save_weights()        
         
     def observationFunction(self, state):
         """
