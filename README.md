@@ -1,13 +1,16 @@
-# Pac-Man AI using Q-Learning & Adversarial Search
+# Pac-Man AI using Q-Learning & Adversarial Search (Endless Survival)
+
 
 ## Project Metadata
 
-| Property  | Value |
-|-----------|-------|
-| Version   | 1.1.5 |
-| Language  | PYTHON |
-| Category  | GAME AI |
-| Framework | TKINTER |
+
+| Property       | Value |
+|----------------|-------|
+| **Version** | 1.1.5 |
+| **Language** | Python 3.x |
+| **Domain** | Reinforcement Learning, Adversarial Search |
+| **Algorithms** | Reflex, Minimax, Alpha-Beta Pruning, Expectimax, Approximate Q-Learning |
+| **Framework** | Tkinter (GUI) |
 
 
 
