@@ -81,7 +81,7 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
+        
 
         """ On https://pacman.fandom.com/wiki/Point_Configurations we can see the following
         point distribution which I'm gonna use to make my evaluationFunction.
@@ -503,7 +503,7 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     kita ganti angka 50 dengan 5 (power pellet) dan 10 menjadi 1 (food) pada fungsi heuristic bagian deterominator untuk mencegah stuck karena agen bimbang.
     """
-    "*** YOUR CODE HERE ***"
+    
 
     """ On https://pacman.fandom.com/wiki/Point_Configurations we can see the following
     point distribution which im gonna use to make my evaluationFunction and the betterEvaluationFunction.
@@ -619,7 +619,7 @@ class FeatureExtractor:
     """
     def bfs_closest_distance(self, start_pos, target_positions, walls):
         """
-        [KOLABORATOR DOC]
+        
         Fungsi pencarian jarak terpendek menggunakan algoritma pencarian melebar (BFS).
         Alih-alih mencari rute ke setiap target (yang berbiaya besar), 
         kita menyebar dari posisi awal dan berhenti pada target pertama yang ditemukan.
@@ -759,7 +759,7 @@ class ApproximateQAgent(Agent):
 
     def load_weights(self):
         """
-        [KOLABORATOR DOC]
+        
         Membaca matriks bobot dari sistem berkas.
         Fungsi ini memungkinkan transfer learning: jika agen pernah dilatih, 
         ia akan memuat pengalamannya. Jika belum, ia mulai dari nol.
@@ -780,7 +780,7 @@ class ApproximateQAgent(Agent):
             print("model_weights.json tidak ditemukan. Agen memulai dengan bobot nol dan epsilon default.")
     def save_weights(self):
         """
-        [KOLABORATOR DOC]
+        
         Serialisasi matriks bobot ke format JSON.
         Disimpan dalam bentuk hirarki agar mudah diaudit secara visual
         oleh peneliti data sains.
@@ -792,7 +792,7 @@ class ApproximateQAgent(Agent):
 
     def registerInitialState(self, state):
         """
-        [KOLABORATOR DOC]
+        
         Fungsi bawaan Agent yang pasti dipanggil di awal setiap episode.
         Kita menggunakan ini sebagai 'garbage collector' untuk memproses
         terminal state (kematian) dari episode sebelumnya yang tertelan oleh 

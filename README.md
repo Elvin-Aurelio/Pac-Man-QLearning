@@ -303,8 +303,10 @@ For more details, visit: http://ai.berkeley.edu
 
 ## Contribution
 1. Elvin Aurelio
-- 
-
+- Develop betterEvaluationFunction
+- Debug Agents Logic
+- Implement Q-Learning Agent
+- Logging summary: Node expansion tracking, computation time tracking, survival steps tracking
 
 2. Jovanic Manuelo
 * Food Respawn
