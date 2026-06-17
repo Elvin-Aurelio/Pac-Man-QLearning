@@ -571,7 +571,7 @@ from game import Agent
 
 class FeatureExtractor:
     """
-    [KOLABORATOR DOC]
+    
     Menambahkan fitur 'ghost-danger' agar agen tidak bunuh diri.
     """
     def get_features(self, state, action):
@@ -606,12 +606,90 @@ class FeatureExtractor:
         return features
 
 
+class FeatureExtractor:
+    """
+    
+    Modul ekstraksi fitur ini mentransformasikan ruang state yang berdimensi tinggi
+    menjadi representasi vektor berdimensi rendah. Sesuai kesepakatan desain,
+    kita mengimplementasikan fitur berbobot jarak dengan normalisasi invers.
+    
+    Trade-off: Ekstraksi ini memanggil `state.generateSuccessor(0, action)`. Secara teoritis, 
+    pada RL model-free murni, agen tidak boleh memiliki fungsi prediksi state. 
+    Namun untuk stabilitas kalkulasi jarak di framework ini, simulasi 1-langkah diizinkan.
+    """
+    def get_features(self, state, action):
+        features = util.Counter()
+        # Menggunakan index 0 untuk Pac-Man
+        successor = state.generateSuccessor(0, action)
+        new_pos = successor.getPacmanPosition()
+
+        # 1. Fitur f1: Jarak ke makanan kecil terdekat
+        new_food = successor.getFood().asList()
+        if len(new_food) > 0:
+            min_food_dist = min([util.manhattanDistance(new_pos, food) for food in new_food])
+            # Normalisasi menggunakan invers: 1 / (d + 1)
+            features["f1_closest_food"] = 1.0 / (min_food_dist + 1.0)
+        else:
+            features["f1_closest_food"] = 0.0
+
+        # Evaluasi Pemisahan Status Hantu (Menggabungkan f2, f4, f5)
+        # Logika Non-Linear: Mencegah agen mati konyol saat waktu scared habis.
+        ghost_states = successor.getGhostStates()
+        active_ghosts = []
+        scared_ghosts = []
+
+        for ghost in ghost_states:
+            ghost_pos = ghost.getPosition()
+            # f5_threshold: Waktu transisi kritis ditetapkan pada 2 frame
+            if ghost.scaredTimer < 2:
+                active_ghosts.append(ghost_pos)
+            else:
+                scared_ghosts.append(ghost_pos)
+
+        # 2. Fitur f2: Jarak ke hantu aktif / berbahaya
+        if active_ghosts:
+            min_active_ghost_dist = min([util.manhattanDistance(new_pos, g_pos) for g_pos in active_ghosts])
+            features["f2_active_ghost"] = 1.0 / (min_active_ghost_dist + 1.0)
+        else:
+            features["f2_active_ghost"] = 0.0
+
+        # 3. Fitur f3: Indikator Jalan Buntu
+        # Aproksimasi heuristik: Jika jumlah langkah legal di state berikutnya <= 1, 
+        # artinya Pac-Man hanya bisa mundur (terjebak).
+        next_legal_actions = successor.getLegalActions(0)
+        if len(next_legal_actions) <= 1:
+            features["f3_dead_end"] = 1.0
+        else:
+            features["f3_dead_end"] = 0.0
+
+        # 4. Fitur f4: Jarak ke hantu yang sedang takut (Peluang makan)
+        if scared_ghosts:
+            min_scared_ghost_dist = min([util.manhattanDistance(new_pos, g_pos) for g_pos in scared_ghosts])
+            features["f4_scared_ghost"] = 1.0 / (min_scared_ghost_dist + 1.0)
+        else:
+            features["f4_scared_ghost"] = 0.0
+
+        # 5. Fitur f6: Jarak ke Power Pellet (Kapsul) terdekat
+        capsules = successor.getCapsules()
+        if len(capsules) > 0:
+            min_capsule_dist = min([util.manhattanDistance(new_pos, cap) for cap in capsules])
+            features["f6_capsule"] = 1.0 / (min_capsule_dist + 1.0)
+        else:
+            features["f6_capsule"] = 0.0
+
+        # Bias Feature: Berfungsi selayaknya nilai intersep pada regresi linear.
+        # Membantu menstabilkan perhitungan ketika semua fitur lain bernilai 0.
+        features["bias"] = 1.0
+
+        return features
+
+
 class ApproximateQAgent(Agent):
     """
-    [KOLABORATOR DOC]
-    - Menginduk ke `Agent` agar dikenali framework.
-    - Menggunakan `util.Counter()` untuk bobot karena mendukung perkalian dot product (a * b).
-    - Menambahkan `getAction` untuk kebijakan Epsilon-Greedy.
+    
+    Agen Approximate Q-Learning. 
+    Nilai Q dihitung secara linear: Q(s,a) = sum_i(w_i * f_i(s,a))
+    Pembaruan bobot (w) menggunakan metode Temporal Difference (TD) learning.
     """
     def __init__(self, alpha=0.2, discount=0.8, epsilon=0.05, **kwargs):
         super().__init__()
@@ -620,51 +698,168 @@ class ApproximateQAgent(Agent):
         self.discount = float(discount)
         self.epsilon = float(epsilon)
         
-        # [EDIT] Gunakan util.Counter agar manipulasi matematika lebih efisien
+        # util.Counter() memungkinkan manipulasi aljabar linear sederhana
         self.weights = util.Counter() 
-        # [EDIT] Hubungkan ekstraktor
         self.extractor = FeatureExtractor() 
 
-    def get_q_value(self, state, action):
-        features = self.extractor.get_features(state, action)
-        # util.Counter mendukung perkalian objek secara langsung untuk dot product
-        return features * self.weights 
+        # [MODIFIKASI] Memori jangka pendek untuk menghitung Temporal Difference
+        self.lastState = None
+        self.lastAction = None
 
-    def update(self, state, action, next_state, reward):
-        # [EDIT] Gunakan API CS188 untuk legal actions
-        next_actions = next_state.getLegalActions(self.index)
+    def registerInitialState(self, state):
+        """
+        [KOLABORATOR DOC]
+        Fungsi bawaan Agent yang pasti dipanggil di awal setiap episode.
+        Kita menggunakan ini sebagai 'garbage collector' untuk memproses
+        terminal state (kematian) dari episode sebelumnya yang tertelan oleh 
+        pemutusan paksa framework.
+        """
+        if self.lastState is not None:
+            # Bukti forensik: Game sebelumnya lenyap tanpa memanggil 'final'.
+            # Karena ini mode endless (kematian adalah satu-satunya jalan keluar),
+            # kita asumsikan mutlak bahwa transisi terakhir adalah kematian.
+            terminal_reward = -500.0
+            
+            # Kalkulasi Temporal Difference Error khusus terminal state.
+            # Nilai masa depan (discount * max_Q) adalah 0 karena agen mati.
+            q_val = self.get_q_value(self.lastState, self.lastAction)
+            difference = terminal_reward - q_val
+            
+            # Pembaruan bobot retroaktif
+            features = self.extractor.get_features(self.lastState, self.lastAction)
+            for feature_name, feature_value in features.items():
+                self.weights[feature_name] += self.alpha * difference * feature_value
+                
+        # Reset memori jangka pendek untuk mulai episode baru
+        self.lastState = None
+        self.lastAction = None
         
-        if not next_actions:
-            max_q_next = 0.0
-        else:
-            max_q_next = max([self.get_q_value(next_state, a) for a in next_actions])
-
-        difference = (reward + self.discount * max_q_next) - self.get_q_value(state, action)
-
-        features = self.extractor.get_features(state, action)
-        for feature_name, feature_value in features.items():
-            # Update formula: w_i = w_i + alpha * difference * f_i(s, a)
-            self.weights[feature_name] += self.alpha * difference * feature_value
+        # [PENTING] Decaying Epsilon
+        # Menurunkan tingkat eksplorasi secara bertahap setiap episode baru.
+        # Ini menjawab masalah mengapa di -n 100 agen tidak tambah pintar.
+        # Agen harus beralih dari fase 'coba-coba' menjadi 'eksploitasi ilmu'.
+        if self.epsilon > 0.05:
+            self.epsilon *= 0.95
+        
+        
+    def observationFunction(self, state):
+        """
+        
+        Fungsi ini dipanggil oleh framework setiap kali agen menerima state baru, 
+        TETAPI SEBELUM agen diminta mengambil tindakan (getAction).
+        Di sinilah kita memiliki s (lastState), a (lastAction), dan s' (state saat ini).
+        """
+        # Jika ini bukan langkah pertama permainan
+        if self.lastState is not None:
+            # Kalkulasi reward: Selisih skor saat ini dengan skor masa lalu
+            reward = state.getScore() - self.lastState.getScore()
+            # Picu pembelajaran!
+            self.update(self.lastState, self.lastAction, state, reward)
+        return state
 
     def getAction(self, state):
         """
-        [KOLABORATOR DOC]
-        Kebijakan Epsilon-Greedy. Menentukan apakah agen mengeksplorasi atau mengeksploitasi.
+        
+        Kebijakan epsilon-greedy yang kini diperbarui untuk merekam tindakan ke memori.
         """
         legal_actions = state.getLegalActions(self.index)
         if not legal_actions:
             return None
 
-        # Eksplorasi: Ambil tindakan acak dengan probabilitas epsilon
+        # Tentukan tindakan (Eksplorasi vs Eksploitasi)
         if util.flipCoin(self.epsilon):
-            return random.choice(legal_actions)
+            action = random.choice(legal_actions)
+        else:
+            action = self.compute_action_from_q_values(state)
 
-        # Eksploitasi: Ambil tindakan dengan nilai Q tertinggi
-        q_values = [self.get_q_value(state, action) for action in legal_actions]
-        max_q = max(q_values)
+        # [MODIFIKASI] Simpan state dan tindakan saat ini untuk observasi di langkah berikutnya
+        self.lastState = state
+        self.lastAction = action
+        return action
+
+    def final(self, state):
+        """
         
-        # Jika ada beberapa tindakan dengan nilai Q maksimal yang sama, pilih secara acak di antaranya
-        best_actions = [a for a, q in zip(legal_actions, q_values) if q == max_q]
+        Dipanggil oleh framework saat permainan berakhir (Pac-Man mati atau menang).
+        Ini sangat krusial karena transisi terakhir menuju kematian memuat penalti terbesar (-500).
+        """
+        if self.lastState is not None:
+            reward = state.getScore() - self.lastState.getScore()
+            self.update(self.lastState, self.lastAction, state, reward)
+            
+        # Reset memori untuk episode / permainan berikutnya
+        self.lastState = None
+        self.lastAction = None
+        
+
+    def get_q_value(self, state, action):
+        """
+        Kalkulasi nilai Q menggunakan perkalian titik (dot product).
+        Operasi `features * self.weights` secara otomatis memetakan key yang sama
+        lalu menjumlahkan hasil kalinya berkat util.Counter.
+        """
+        features = self.extractor.get_features(state, action)
+        return features * self.weights 
+
+    def compute_value_from_q_values(self, state):
+        """
+        Menghitung V(s), yaitu ekspektasi nilai Q terbaik dari sebuah state:
+        V(s) = max_a Q(s, a)
+        """
+        legal_actions = state.getLegalActions(self.index)
+        if not legal_actions:
+            return 0.0
+        return max([self.get_q_value(state, action) for action in legal_actions])
+
+    def compute_action_from_q_values(self, state):
+        """
+        
+        Mencari tindakan terbaik berdasarkan bobot saat ini: argmax_a Q(s, a).
+        Jika ada lebih dari satu aksi dengan nilai Q maksimal (seri),
+        kita wajib memecahnya secara acak (tie-breaking) agar agen tidak terjebak loop.
+        """
+        legal_actions = state.getLegalActions(self.index)
+        if not legal_actions:
+            return None
+
+        max_q = self.compute_value_from_q_values(state)
+        # Identifikasi semua aksi yang menghasilkan max_q
+        best_actions = [a for a in legal_actions if self.get_q_value(state, a) == max_q]
         return random.choice(best_actions)
+
+    # def getAction(self, state):
+    #     """
+        
+    #     Menerapkan kebijakan epsilon-greedy untuk Dilema Eksplorasi vs Eksploitasi.
+    #     """
+    #     legal_actions = state.getLegalActions(self.index)
+    #     if not legal_actions:
+    #         return None
+
+    #     # Eksplorasi
+    #     if util.flipCoin(self.epsilon):
+    #         return random.choice(legal_actions)
+
+    #     # Eksploitasi
+    #     return self.compute_action_from_q_values(state)
+
+    def update(self, state, action, next_state, reward):
+        """
+        
+        Inti dari pembelajaran mesin agen. Dipanggil setelah agen melakukan observasi transisi.
+        Formula update bobot: w_i = w_i + alpha * (TD_Error) * f_i(s, a)
+        """
+        # 1. Hitung target empiris (Realitas + Estimasi Masa Depan)
+        target = reward + (self.discount * self.compute_value_from_q_values(next_state))
+        
+        # 2. Hitung Kesalahan Prediksi (TD Error)
+        q_val = self.get_q_value(state, action)
+        difference = target - q_val
+
+        # 3. Distribusikan perbaikan pada masing-masing bobot berdasarkan kontribusi fiturnya
+        features = self.extractor.get_features(state, action)
+        for feature_name, feature_value in features.items():
+            self.weights[feature_name] += self.alpha * difference * feature_value
+
 # Abbreviation
 better = betterEvaluationFunction
