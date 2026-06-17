@@ -569,41 +569,6 @@ def betterEvaluationFunction(currentGameState: GameState):
     return currentGameState.getScore() + total_score
 
 
-class FeatureExtractor:
-    """
-    
-    Menambahkan fitur 'ghost-danger' agar agen tidak bunuh diri.
-    """
-    def get_features(self, state, action):
-        features = util.Counter()
-        successor = state.generatePacmanSuccessor(action)
-        new_pos = successor.getPacmanPosition()
-        new_food = successor.getFood()
-        
-        # 1. Fitur Makanan
-        features["eats-food"] = 1.0 if successor.getNumFood() < state.getNumFood() else 0.0
-        
-        food_list = new_food.asList()
-        if len(food_list) > 0:
-            min_food_dist = min([util.manhattanDistance(new_pos, food) for food in food_list])
-            features["closest-food"] = 1.0 / (min_food_dist + 1)
-        else:
-            features["closest-food"] = 0.0
-            
-        # 2. [EDIT] Fitur Bahaya Hantu (Ghost Danger)
-        # Ambil posisi hantu yang aktif (tidak sedang scared)
-        ghosts = successor.getGhostStates()
-        active_ghosts = [g.getPosition() for g in ghosts if g.scaredTimer == 0]
-        
-        if active_ghosts:
-            min_ghost_dist = min([util.manhattanDistance(new_pos, g_pos) for g_pos in active_ghosts])
-            # Jika hantu berjarak 1 blok (bisa memakan Pacman di giliran berikutnya)
-            if min_ghost_dist <= 1:
-                features["ghost-danger"] = 1.0
-            else:
-                features["ghost-danger"] = 0.0
-                
-        return features
 
 
 class FeatureExtractor:
@@ -745,9 +710,18 @@ class ApproximateQAgent(Agent):
         self.discount = float(discount)
         self.epsilon = float(epsilon)
         
-        # util.Counter() memungkinkan manipulasi aljabar linear sederhana
+        # [EDIT] Tangkap batasan training dari terminal
+        self.numTraining = int(kwargs.get('numTraining', 0))
+        self.episodesSoFar = 0 
+        
         self.weights = util.Counter() 
         self.extractor = FeatureExtractor() 
+        self.lastState = None
+        self.lastAction = None
+
+        # util.Counter() memungkinkan manipulasi aljabar linear sederhana
+        # self.weights = util.Counter() 
+        # self.extractor = FeatureExtractor() 
 
         # [MODIFIKASI] Memori jangka pendek untuk menghitung Temporal Difference
         self.lastState = None
@@ -817,11 +791,21 @@ class ApproximateQAgent(Agent):
         self.lastState = None
         self.lastAction = None
         
+        # [EDIT] Transisi dari Fase Belajar ke Fase Ujian
+        self.episodesSoFar += 1
+        
+        # Jika jumlah game sudah melampaui batas training (contoh: masuk game ke-101)
+        if self.episodesSoFar > self.numTraining:
+            # Matikan sifat acak! Agen 100% menggunakan ilmunya (Eksploitasi Mutlak)
+            self.epsilon = 0.0 
+            # Kunci otaknya! Agen tidak lagi memodifikasi bobot (Berhenti Belajar)
+            self.alpha = 0.0
+
         # [PENTING] Decaying Epsilon
         # Menurunkan tingkat eksplorasi secara bertahap setiap episode baru.
         # Ini menjawab masalah mengapa di -n 100 agen tidak tambah pintar.
         # Agen harus beralih dari fase 'coba-coba' menjadi 'eksploitasi ilmu'.
-        if self.epsilon > 0.05:
+        if self.epsilon > 0.01:
             self.epsilon *= 0.95
 
         self.save_weights()        
