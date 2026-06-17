@@ -88,31 +88,57 @@ Pacman Agent    Ghost Agent
 ```
 Pac-Man-QLearning/
 │
-├── assets/
-├── docs/
-├── src/
-│   ├── agents/
-│   │   ├── ghostAgents.py
-│   │   ├── keyboardAgents.py
-│   │   ├── multiAgents.py
-│   │   └── pacmanAgents.py
-│   │
-│   ├── core/
-│   │   ├── game.py
-│   │   ├── layout.py
-│   │   └── util.py
-│   │
-│   ├── display/
-│   │   ├── graphicsDisplay.py
-│   │   ├── graphicsUtils.py
-│   │   └── textDisplay.py
-│   │
-│   └── layouts/
+├── agents/
+│   ├── __init__.py
+│   ├── ghostAgents.py
+│   ├── keyboardAgents.py
+│   ├── multiAgents.py
+│   └──pacmanAgents.py
+│ 
+├── core/
+│   ├── __init__.py
+│   ├── base_agent.py
+│   ├── board.py
+│   ├── engine.py
+│   ├── game.py
+│   ├── geometry.py
+│   ├── layout.py
+│   ├── state_data.py
+│   └── util.py
 │
+├── display/
+│   ├── capsuleClassic.lay
+│   ├── contestClassic.lay
+│   ├── mediumClassic.lay
+│   ├── minimaxClassic.lay
+│   ├── openClassic.lay
+│   ├── originalClassic.lay
+│   ├── powerClassic.lay
+│   ├── testClassic.lay
+│   ├── trappedClassic.lay
+│   └── trickyClassic.lay
+│ 
+├── layouts/
+│   ├── __init__.py
+│   ├── ghostAgents.py
+│   ├── keyboardAgents.py
+│   ├── multiAgents.py
+│   └── pacmanAgents.py
+│ 
 ├── tests/
+│   ├── __init__.py
+│   ├── multiagentTestClasses.py
+│   ├── testClasses.py
+│   └── testParser.py
+│ 
+├── .gitignore
+├── Agent_explanation.md
 ├── README.md
-├── requirements.txt
-└── LICENSE
+├── autograder.py
+├── pacman.py
+├── pacman_weights.json
+├── projectParams.py
+└── requirements.txt
 ```
 
 
