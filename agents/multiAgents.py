@@ -703,7 +703,7 @@ class ApproximateQAgent(Agent):
     Nilai Q dihitung secara linear: Q(s,a) = sum_i(w_i * f_i(s,a))
     Pembaruan bobot (w) menggunakan metode Temporal Difference (TD) learning.
     """
-    def __init__(self, alpha=0.2, discount=0.8, epsilon=0.05, **kwargs):
+    def __init__(self, alpha=0.2, discount=0.8, epsilon=0.5, **kwargs):
         super().__init__()
         self.index = 0 
         self.alpha = float(alpha)
@@ -805,7 +805,7 @@ class ApproximateQAgent(Agent):
         # Menurunkan tingkat eksplorasi secara bertahap setiap episode baru.
         # Ini menjawab masalah mengapa di -n 100 agen tidak tambah pintar.
         # Agen harus beralih dari fase 'coba-coba' menjadi 'eksploitasi ilmu'.
-        if self.epsilon > 0.01:
+        if self.epsilon > 0.05:
             self.epsilon *= 0.95
 
         self.save_weights()        
