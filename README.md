@@ -221,23 +221,60 @@ python pacman.py -l minimaxClassic
 ```
 
 
-## Reinforcement Learning Concept
+## Reinforcement Learning Concept (ApproximateQAgent)
 
-Q-Learning uses the following equation:
+Approximate Q-Learning implemented in `agents/multiAgents.py` (class `ApproximateQAgent`) uses a linear combination of features to estimate Q-values:
 
-Q(s,a) = Q(s,a) + α(r + γ max Q(s',a') - Q(s,a))
+- Q(s, a) = sum_i w_i * f_i(s, a)
 
 Where:
+- f_i(s, a) are features extracted by `FeatureExtractor.get_features(state, action)` (see `multiAgents.py`). Features include distance-based normalized features for closest food, active/scared ghosts, capsules, a dead-end indicator, and a bias term.
+- w_i are learnable weights stored in a util.Counter and persisted to disk in `pacman_weights.json` (agent loads this file automatically if present).
 
-| Variable | Description |
-|----------|-------------|
-| Q(s,a) | Q-value for action a in state s |
-| α | Learning rate |
-| γ | Discount factor |
-| r | Reward |
-| s | Current state |
-| s' | Next state |
+Key implementation details from `ApproximateQAgent`:
+- Parameters: alpha (learning rate), discount (gamma), epsilon (exploration probability).
+- The agent uses an epsilon-greedy policy: with probability epsilon it explores (random legal action), otherwise it picks the argmax action of Q(s,a).
+- Weights are updated using Temporal Difference (TD) learning:
+  w_i <- w_i + alpha * (r + gamma * max_a' Q(s', a') - Q(s, a)) * f_i(s, a)
+- The agent automatically loads `pacman_weights.json` on startup if the file exists; when loading weights, it also reduces epsilon (multiplies by 0.5 but keeps a minimum 0.01) to favor exploitation.
+- The agent keeps short-term memory (lastState, lastAction) to process transitions and applies a large terminal penalty (-500) when an episode ends unexpectedly.
+- Number of training episodes can be controlled; once episodes exceed training limit, the agent sets epsilon=0 and alpha=0 (no more exploration or learning).
+- Epsilon decays each episode (multiplicative decay of 0.95 while > 0.05) to anneal exploration during training.
 
+
+## Using ApproximateQAgent (Terminal commands)
+
+Basic run (use ApproximateQAgent with default parameters):
+```bash
+python pacman.py -p ApproximateQAgent
+```
+
+Run with explicit agent hyperparameters (alpha, discount, epsilon, numTraining):
+```bash
+python pacman.py -p ApproximateQAgent -a alpha=0.2,discount=0.8,epsilon=0.5,numTraining=100
+```
+
+Set number of games / training episodes using `-n` (number of games) and `-x` (numTraining episodes passed by framework):
+```bash
+# Train for 200 games without GUI (quiet) and save weights
+python pacman.py -p ApproximateQAgent -n 200 -x 200 -q
+```
+
+Run headless evaluation after training (uses saved weights if present and reduces epsilon automatically):
+```bash
+python pacman.py -p ApproximateQAgent -n 20 -q
+```
+
+Examples combining layout and multiple flags:
+```bash
+# Train for 100 episodes on mediumClassic layout with custom hyperparams
+python pacman.py -l mediumClassic -p ApproximateQAgent -a alpha=0.1,discount=0.9,epsilon=0.6,numTraining=100 -n 100 -q
+```
+
+Notes:
+- The agent persists weights to `pacman_weights.json` in the repo root. After training, re-running the agent will load these weights and reduce exploration automatically.
+- If you want to reset learned weights, delete `pacman_weights.json` before running.
+- If you provide `numTraining` via `-a numTraining=...` and also use `-x`, the agent may receive `numTraining` via kwargs depending on the framework; using `-x` is the standard way to set training episodes for the runner.
 
 
 ## Dictionary Commands
@@ -321,10 +358,9 @@ Recommended improvements for the project:
 
 
 
-
 ## License
 
-Educational License - These projects are free to use or extend for educational purposes. You are free to use or extend these projects provided that (1) you do not distribute or publish solutions, (2) you retain this notice, and (3) you provide clear attribution to UC Berkeley.
+Educational License - These projects are free to use or extend for educational purposes. You are free to use or extend these projects provided that (1) you do not distribute or publish solutions,[...]
 
 For more details, visit: http://ai.berkeley.edu
 
@@ -341,4 +377,3 @@ For more details, visit: http://ai.berkeley.edu
 * Food Respawn
 * ReadMe & Use Guide setups
 * Change Gameplay to endless mode (no win condition)
-
